@@ -32,9 +32,12 @@ class UR():
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.connect((host,port))
 
-    def disconnectUR(self)
+    def disconnectUR(self):
         self.close()
+
+    def readScripts():
         
+
 class SubHandler(object):
 
     """
