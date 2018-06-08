@@ -4,33 +4,19 @@ OPC UA Server for Universal Robots
 
 ## Getting Started
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+A simple pyhton server, which uses UR scripts. The commands are sent using TCP socket on port 30002.
 
-### Prerequisites
+### Prerequisites & Intallation
 
-What things you need to install the software and how to install them
+To run the server we need the following packages:
 
+* Python OPC UA package:
 ```
-Give examples
-```
-
-### Installing
-
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
-
-```
-Give the example
+pip install opcua
+pip install cryptography
 ```
 
-And repeat
-
-```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
+* Socket package
 
 ## Contributing
 
