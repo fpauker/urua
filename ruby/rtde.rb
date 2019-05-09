@@ -34,7 +34,6 @@ class RTDE
     @sock = nil
     @output_config = nil
     @input_config = {}
-
    end
 
    def connected
@@ -53,4 +52,12 @@ class RTDE
      @sock = TCPSocket.open(hostname, port)
      @sock = ConnectionState._CONNECTED
    end
+
+   def disconnect
+     if @sock
+       @sock.close
+       @sock = nil
+    @conn_state = ConnectionState._DISCONNECTED
+
+
 end
