@@ -33,6 +33,7 @@ class RTDE
     @conn_state = ConnectionState._DISCONNECTED
     @sock =
 
+
    end
 
    def connected
