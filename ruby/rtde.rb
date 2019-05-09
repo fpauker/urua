@@ -31,18 +31,26 @@ class RTDE
     @hostname = hostname
     @port = port
     @conn_state = ConnectionState._DISCONNECTED
-    @sock =
-
+    @sock = nil
+    @output_config = nil
+    @input_config = {}
 
    end
 
    def connected
-     buf = 'b' # buffer data in binary format
+
+     #connect to robot controller using the rtde socket
+
+     if @sock
+       return
+     end
+
+     @buf = 'b' # buffer data in binary format
      #self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
      #self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
      #self.__sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
      #self.__sock.settimeout(DEFAULT_TIMEOUT)
-     sock = TCPSocket.open(hostname, port)
-     initialize.sock = ConnectionState._CONNECTED
+     @sock = TCPSocket.open(hostname, port)
+     @sock = ConnectionState._CONNECTED
    end
 end
