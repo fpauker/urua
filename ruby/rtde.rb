@@ -84,6 +84,7 @@ class Rtde
   end
 
   def send_input_setup variables, types=[]
+    #rework necessary
     cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_INPUTS
     payload = variables.join ','
     result = sendAndReceive cmd, payload
@@ -94,7 +95,8 @@ class Rtde
     #DataObject.create_empty variables result.id
   end
 
-  def send_output_setup(variables, types=[], frequency = 125)
+  def send_output_setup variables, types=[], frequency = 125
+    #rework necessary
     cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
     payload = [frequency].pack 'G'
     payload = payload + variables.join ','
@@ -114,11 +116,38 @@ class Rtde
     sucess = sendAndReceive(cmd)
     if success
       logger.info('RTDE synchronization started')
-      @conn_state = ConnectionState::started
+      @conn_state = ConnectionState::STARTED
     else
       logger.error('RTDE synchronization failed to start')
     end
     success
   end
+
+  def send_pause
+    cmd = Command::RTDE_CONTROL_PACKAGE_PAUSE
+    sucess = sendAndReceive(cmd)
+    if success
+      logger.info('RTDE synchronization paused')
+      @conn_state = ConnectionState::PAUSED
+    else
+      logger.error('RTDE synchronization failed to pause')
+    end
+    success
+  end
+
+  def send input_data
+    if @conn_state != ConnectionState::STARTED
+      logger.error 'Cannot send when RTDE synchroinization is inactive'
+      return
+    end
+    if not @input_config.key?(input_data.recipe_id)
+      logger.error 'Input configuration id not found: ' + @input_data.recipe_id
+      return
+    end
+  config = @input_config[input_data.recipe_id]
+  sendall Command::RTDE_DATA_PACKAGE, config.pack input_data #not sure if this is correct
+  end
+
+
 
 end
