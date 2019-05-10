@@ -62,5 +62,6 @@ class Rtde
   end
 end
 
-rtde = Rtde. new("192.168.56.1",30004)
+rtde = Rtde. new("192.168.56.101",30004)
 rtde.connect
+puts "done!"
