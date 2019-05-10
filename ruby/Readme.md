@@ -28,7 +28,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 ## Authors
 
 * **Florian Pauker** - *OPC UA Modelling* -
-  **Jürgen Mangler** - *Ruby Support* -
+* **Jürgen Mangler** - *Ruby Support* -
 
 See also the list of [contributors](https://intra.acdp.at/gogs/fpauker/ua4ur/contributors) who participated in this project.
 
