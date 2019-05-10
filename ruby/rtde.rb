@@ -1,17 +1,18 @@
 require 'socket'        # Sockets are in standard library
 
-class Command
-    _RTDE_REQUEST_PROTOCOL_VERSION = 86        # ascii V
-    _RTDE_GET_URCONTROL_VERSION = 118          # ascii v
-    _RTDE_TEXT_MESSAGE = 77                    # ascii M
-    _RTDE_DATA_PACKAGE = 85                    # ascii U
-    _RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS = 79   # ascii O
-    _RTDE_CONTROL_PACKAGE_SETUP_INPUTS = 73    # ascii I
-    _RTDE_CONTROL_PACKAGE_START = 83           # ascii S
-    _RTDE_CONTROL_PACKAGE_PAUSE = 80           # ascii P
-end
+  class Command
+    # rtde_request_protocol_version = 86
+    @RTDE_REQUEST_PROTOCOL_VERSION = 86        # ascii V
+    @RTDE_GET_URCONTROL_VERSION = 118          # ascii v
+    @RTDE_TEXT_MESSAGE = 77                    # ascii M
+    @RTDE_DATA_PACKAGE = 85                    # ascii U
+    @RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS = 79   # ascii O
+    @RTDE_CONTROL_PACKAGE_SETUP_INPUTS = 73    # ascii I
+    @RTDE_CONTROL_PACKAGE_START = 83           # ascii S
+    @RTDE_CONTROL_PACKAGE_PAUSE = 80           # ascii P
+  end
 
-RTDE_PROTOCOL_VERSION = 2
+_RTDE_PROTOCOL_VERSION = 2
 
 class ConnectionState
     _DISCONNECTED = 0
@@ -59,5 +60,12 @@ class RTDE
        @sock = nil
     @conn_state = ConnectionState._DISCONNECTED
 
+  def get_controller_version
+    cmd = Command._RTDE_GET_URCONTROL_VERSION
+    puts cmd
+  end
 
 end
+
+rdte = RDTE('test',555)
+rdte.get_controller_version
