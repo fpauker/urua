@@ -148,6 +148,21 @@ class Rtde
   sendall Command::RTDE_DATA_PACKAGE, config.pack input_data #not sure if this is correct
   end
 
+  def receive
+    return nil if @output_config
+    return nil if @conn_state != ConnectionState::STARTED
+    recv Command::RTDE_DATA_PACKAGE
+  end
+
+  def send_message message, source = 'Ruby Client', type = serialize.Message::INFO_MESSAGE
+    cmd = Command::RTDE_TEXT_MESSAGE
+    #must be converted to ruby
+    #fmt = '>B%dsB%dsB' % (len(message), len(source))
+    #payload = struct.pack(fmt, len(message), message, len(source), source, type)
+    sendall(cmd, payload)
+  end
+
+
 
 
 end
