@@ -19,7 +19,7 @@ module ConnectionState
   PAUSED = 3
 end
 
-class RTDEException < RuntimeException; end
+class RTDEException < Exception; end
 
 class Rtde
   RTDE_PROTOCOL_VERSION = 2
