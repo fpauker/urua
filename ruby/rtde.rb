@@ -57,7 +57,7 @@ class Rtde
     puts "hello"
   end
 
-  def connected
+  def connect
   #connect to robot controller using the rtde socket
     if @sock
       return
@@ -84,5 +84,5 @@ class Rtde
   end
 end
 
-rdte = Rtde. new("test",444)
-rdte.get_controller_version
+rtde = Rtde. new("192.168.56.1",30004)
+rtde.connect
