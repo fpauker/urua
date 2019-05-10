@@ -1,5 +1,9 @@
 #!/usr/bin/env ruby
 require 'socket'        # Sockets are in standard library
+require 'logger'
+require 'serialize'
+
+logger = Logger.new STDOUT
 
 module Command
   RTDE_REQUEST_PROTOCOL_VERSION = 86        # ASCII V
@@ -58,10 +62,107 @@ class Rtde
   end
 
   def get_controller_version
-    cmd = Command.rtde_get_urcontrol_version
+    #get controller version
+    cmd = Command::RTDE_GET_URCONTROL_VERSION
+    version = sendAndReceive(cmd)
+    if version
+      logger.info('Controller version' + version.major)
+      if version.major == 3 && version.minor <=2 && version.bugfix < 19171
+        logger.error 'Upgrade your controller to versino 3.2.19171 or higher'
+        exit
+      end
+      version.major, version.minor, version.bugfix, version.build
+    else
+      nil, nil, nil, nil
+    end
   end
-end
 
-rtde = Rtde. new("192.168.56.101",30004)
-rtde.connect
-puts "done!"
+  def negotiate_protocol_version
+    cmd = Command::RTDE_REQUEST_PROTOCOL_VERSION
+    payload = [RTDE_PROTOCOL_VERSION].pack 'S>'
+    sucess = sendAndReceive cmd, payload
+  end
+
+  def send_input_setup variables, types=[]
+    #rework necessary
+    cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_INPUTS
+    payload = variables.join ','
+    result = sendAndReceive cmd, payload
+    return nil if types.len <> 0 && !  result.types == types
+
+    result.names = variables
+    @input_config[result.id] = result
+    #DataObject.create_empty variables result.id
+  end
+
+  def send_output_setup variables, types=[], frequency = 125
+    #rework necessary
+    cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
+    payload = [frequency].pack 'G'
+    payload = payload + variables.join ','
+    result = sendAndReceive cmd, payload
+    #if len(types)!=0 and not self.__list_equals(result.types, types):
+    #    logging.error('Data type inconsistency for output setup: ' +
+    #             str(types) + ' - ' +
+    #             str(result.types))
+    #    return False
+    result.names = variables
+    @output_config = result
+    return TRUE
+  end
+
+  def send_start
+    cmd = Command::RTDE_CONTROL_PACKAGE_START
+    sucess = sendAndReceive(cmd)
+    if success
+      logger.info('RTDE synchronization started')
+      @conn_state = ConnectionState::STARTED
+    else
+      logger.error('RTDE synchronization failed to start')
+    end
+    success
+  end
+
+  def send_pause
+    cmd = Command::RTDE_CONTROL_PACKAGE_PAUSE
+    sucess = sendAndReceive(cmd)
+    if success
+      logger.info('RTDE synchronization paused')
+      @conn_state = ConnectionState::PAUSED
+    else
+      logger.error('RTDE synchronization failed to pause')
+    end
+    success
+  end
+
+  def send input_data
+    if @conn_state != ConnectionState::STARTED
+      logger.error 'Cannot send when RTDE synchroinization is inactive'
+      return
+    end
+    if not @input_config.key?(input_data.recipe_id)
+      logger.error 'Input configuration id not found: ' + @input_data.recipe_id
+      return
+    end
+  config = @input_config[input_data.recipe_id]
+  sendall Command::RTDE_DATA_PACKAGE, config.pack input_data #not sure if this is correct
+  end
+
+  def receive
+    return nil if @output_config
+    return nil if @conn_state != ConnectionState::STARTED
+    recv Command::RTDE_DATA_PACKAGE
+  end
+
+  def send_message message, source = 'Ruby Client', type = serialize.Message::INFO_MESSAGE
+    cmd = Command::RTDE_TEXT_MESSAGE
+    #must be converted to ruby
+    #fmt = '>B%dsB%dsB' % (len(message), len(source))
+    #payload = struct.pack(fmt, len(message), message, len(source), source, type)
+    sendall(cmd, payload)
+  end
+
+
+
+
+end
