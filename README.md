@@ -1,6 +1,6 @@
-# Project Title
+# UA4UR
 
-OPC Unified Architecture (OPC UA) server for Universal Robots.
+OPC Unified Architecture (OPC UA) server for Universal Robots based on open62541.
 
 ## Getting Started
 
