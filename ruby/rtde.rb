@@ -173,7 +173,40 @@ class Rtde
     return unpack_protocol_version_package payload if cmd == Command::RTDE_DATA_PACKAGE
     logger.error 'Unknown package command' + cmd.to_s
   end
-  
+
+def sendAndReceive cmd, payload
+  return recv cmd if sendall cmd, payload
+  return nil
+end
+
+def sendall command, payload
+
+  fmt = '>HB'   #muust be converted to ruby @juergen
+  size
 
 
+end
+
+def trigger_disconnected
+  logger.info ('RTDE disconnected')
+  disconnect
+end
+
+def unpack_protocol_version_package payload
+  return nil if payload.len != 1
+  result = serialize.ReturnValue.unpack payload
+  result.success
+end
+
+def unpack_urcontrol_version_package payload
+  return nil if payload.len != 16
+  version = serialize.ControlVersion.unpack payload
+end
+
+def unpack_text_message payload
+  return nil if payload.len < 1
+  msg = serialize.Message.unpack payload
+  logger.error msg.source + ':' + msg.message if msg.level == serialize.Message::EXCEPTION_MESSAGE || msg.level == serialize.Message::ERROR_MESSAGE
+  logger.warning msg.source + ':' + msg.message if msg.level == serialize.Message::WARNING_MESSAGE
+  logger.info msg.source + ':' + msg.message if msg.level == serialize.Message::INFO_MESSAGE
 end
