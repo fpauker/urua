@@ -26,7 +26,7 @@ end
 class RTDEException < Exception; end
 
 class Rtde
-  RTDE_PROTOCOL_VERSION = 2
+  RTDE_PROTOCOL_VERSION = 2   #moved to Rtde class
   def initialize(hostname, port)
     @hostname = hostname
     @port = port
@@ -162,7 +162,18 @@ class Rtde
     sendall(cmd, payload)
   end
 
-
+  def on_packet cmd, payload
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_REQUEST_PROTOCOL_VERSION
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_GET_URCONTROL_VERSION
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_TEXT_MESSAGE
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_CONTROL_PACKAGE_SETUP_INPUTS
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_CONTROL_PACKAGE_START
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_CONTROL_PACKAGE_PAUSE
+    return unpack_protocol_version_package payload if cmd == Command::RTDE_DATA_PACKAGE
+    logger.error 'Unknown package command' + cmd.to_s
+  end
+  
 
 
 end
