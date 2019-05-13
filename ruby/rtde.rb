@@ -210,3 +210,11 @@ def unpack_text_message payload
   logger.warning msg.source + ':' + msg.message if msg.level == serialize.Message::WARNING_MESSAGE
   logger.info msg.source + ':' + msg.message if msg.level == serialize.Message::INFO_MESSAGE
 end
+
+def unpack_setup_outputs_package payload
+  if payload.len < 1
+    logger.error 'RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS: No payload'
+    return nil
+  end
+  output_config = serialize.DataConfig.unpack_recipe payload
+end
