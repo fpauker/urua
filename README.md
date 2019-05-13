@@ -1,6 +1,6 @@
 # Project Title
 
-One Paragraph of project description goes here
+OPC Unified Architecture (OPC UA) server for Universal Robots.
 
 ## Getting Started
 
@@ -8,59 +8,31 @@ These instructions will get you a copy of the project up and running on your loc
 
 ### Prerequisites
 
-What things you need to install the software and how to install them
 
 ```
-Give examples
+Universal Robot CB 4 and up
+opcua-smart for ruby
 ```
 
 ### Installing
 
-A step by step series of examples that tell you how to get a development env running
-
-Say what the step will be
+Install open62541 and then opcua-smart for ruby. For details follow the instructions on https://github.com/etm/opcua-smart 
+```
+git clone https://github.com/open62541/open62541.git
+cd open62541
+mkdir build
+cd build
+cmake ..
+ccmake ..
+make
+sudo make install
 
 ```
-Give the example
+
+Install opcua-smart for ruby (https://github.com/etm/opcua-smart)
 ```
-
-And repeat
-
+gem install opcua
 ```
-until finished
-```
-
-End with an example of getting some data out of the system or using it for a little demo
-
-## Running the tests
-
-Explain how to run the automated tests for this system
-
-### Break down into end to end tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-### And coding style tests
-
-Explain what these tests test and why
-
-```
-Give an example
-```
-
-## Deployment
-
-Add additional notes about how to deploy this on a live system
-
-## Built With
-
-* [Dropwizard](http://www.dropwizard.io/1.0.2/docs/) - The web framework used
-* [Maven](https://maven.apache.org/) - Dependency Management
-* [ROME](https://rometools.github.io/rome/) - Used to generate RSS Feeds
 
 ## Contributing
 
@@ -79,7 +51,7 @@ See also the list of [contributors](https://github.com/your/project/contributors
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GNU Lesser General Public License 3.0 - see the [LICENSE.md](LICENSE.md) file for details
 
 ## Acknowledgments
 
