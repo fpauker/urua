@@ -55,6 +55,4 @@ This project is licensed under the GNU Lesser General Public License 3.0 - see t
 
 ## Acknowledgments
 
-* Hat tip to anyone whose code was used
-* Inspiration
-* etc
+This work has been fundet by the Austrian Center for Digital Production
