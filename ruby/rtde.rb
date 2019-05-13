@@ -218,3 +218,11 @@ def unpack_setup_outputs_package payload
   end
   output_config = serialize.DataConfig.unpack_recipe payload
 end
+
+def unpack_setup_inputs_package payload
+  if payload.len < 1
+    logger.error 'RTDE_CONTROL_PACKAGE_SETUP_INPUTS: No payload'
+    return nil
+  end
+  input_config = serialize.DataConfig.unpack_recipe payload
+end
