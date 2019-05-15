@@ -226,3 +226,10 @@ def unpack_setup_inputs_package payload
   end
   input_config = serialize.DataConfig.unpack_recipe payload
 end
+
+def liste_equals l1, l2
+  return nil if l1.len != l2.len
+  li.len.each do |i|
+    return nil if l1[i] != l2[i]
+  return true
+end
