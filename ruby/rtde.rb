@@ -227,9 +227,36 @@ def unpack_setup_inputs_package payload
   input_config = serialize.DataConfig.unpack_recipe payload
 end
 
+def unpack_start_package(self, payload):
+  if payload.len != 1:
+    logger.error('RTDE_CONTROL_PACKAGE_START: Wrong payload size')
+    return nil
+  end
+  result = serialize.ReturnValue.unpack payload
+  return result.success
+end
+
+def unpack_pause_package(self, payload):
+  if payload.len != 1:
+    logger.error('RTDE_CONTROL_PACKAGE_PAUSE: Wrong payload size')
+    return nil
+  end
+  result = serialize.ReturnValue.unpack payload
+  return result.success
+end
+
+def unpack_data_package payload
+  if payload.len < 1
+    logger.error 'RTDE_DATA_PACKAGE: Missing output configuration'
+    return nil
+  end
+  output = output.config.unpack payload
+end
+
 def liste_equals l1, l2
   return nil if l1.len != l2.len
   li.len.each do |i|
     return nil if l1[i] != l2[i]
+  end
   return true
 end
