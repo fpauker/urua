@@ -1,7 +1,7 @@
 #!/usr/bin/env ruby
 require 'socket'        # Sockets are in standard library
 require 'logger'
-require 'serialize'
+require_relative 'serialize'
 
 logger = Logger.new STDOUT
 
@@ -70,9 +70,9 @@ class Rtde
         logger.error 'Upgrade your controller to version 3.2.19171 or higher'
         exit
       end
-      version.major, version.minor, version.bugfix, version.build
+      [version.major, version.minor, version.bugfix, version.build]
     else
-      nil, nil, nil, nil
+      [nil, nil, nil, nil]
     end
   end
 
@@ -103,7 +103,7 @@ class Rtde
   def send_output_setup(variables, types=[], frequency = 125)
     cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
     payload = [frequency].pack 'G'
-    payload = payload + variables.join ','
+    payload = payload + variables.join(',')
     result = sendAndReceive cmd, payload
     if types.length != 0 and not result.types != types
       logger.error(
@@ -163,7 +163,7 @@ class Rtde
 
   def send_message(message, source = 'Ruby Client', type = Serialize::Message::INFO_MESSAGE)
     cmd = Command::RTDE_TEXT_MESSAGE
-    fmt = 'Ca%dCa%dC' % (message.length, source.length)
+    fmt = 'Ca%dCa%dC' % [message.length, source.length]
     payload = struct.pack(fmt, message.length, message, source.length, source, type)
     sendall(cmd, payload)
   end
@@ -211,7 +211,7 @@ class Rtde
   def recv(command)
     while connected?
       readable, _, xlist = IO.select([@sock], [], [@sock])
-      if len(readable):
+      if readable.length > 0
         more = @sock.recv(4096)
         if len(more) == 0
           trigger_disconnected
@@ -231,7 +231,7 @@ class Rtde
         if @buf.length >= packet_header.size
           packet, @buf = @buf[3..packet_header.size], @buf[packet_header.size..-1]
           data = on_packet(packet_header.command, packet)
-          if @buf.length >= 3 && command == Command.RTDE_DATA_PACKAGE:
+          if @buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE
             next_packet_header = Serialize::ControlHeader.unpack(@buf)
             if next_packet_header.command == command
               logger.info 'skipping package(1)'
