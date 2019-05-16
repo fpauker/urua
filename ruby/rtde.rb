@@ -65,10 +65,10 @@ class Rtde
   def get_controller_version
     cmd = Command::RTDE_GET_URCONTROL_VERSION
     version = sendAndReceive cmd
-    @logger.debug 'Controller Version: ' + version.major.to_s + '.' + version.minor.to_s + '.' + version.bugfix.to_s
+    @logger.debug 'Controller Version: ' + version.major.to_s + '.' + version.minor.to_s + '.' + version.bugfix.to_s + '.' + version.build.to_s
     if version
       if version.major == 3 && version.minor <=2 && version.bugfix < 19171
-        @logger.error 'Upgrade your controller to version 3.2.19171 or higher'
+        @logger.error 'Upgrade your controller to version higher than 3.2.19171'
         exit
       end
       [version.major, version.minor, version.bugfix, version.build]
