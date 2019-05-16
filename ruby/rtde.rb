@@ -186,7 +186,7 @@ class Rtde
     return unpack_setup_inputs_package(payload)        if cmd == Command::RTDE_CONTROL_PACKAGE_SETUP_INPUTS
     return unpack_start_package(payload)               if cmd == Command::RTDE_CONTROL_PACKAGE_START
     return unpack_pause_package(payload)               if cmd == Command::RTDE_CONTROL_PACKAGE_PAUSE
-    return unpack_data_package(payload, output_config) if cmd == Command::RTDE_DATA_PACKAGE
+    return unpack_data_package(payload, @output_config) if cmd == Command::RTDE_DATA_PACKAGE
     @logger.error 'Unknown package command' + cmd.to_s
   end
 
@@ -261,7 +261,7 @@ class Rtde
             next_packet_header = Serialize::ControlHeader.unpack(@buf)
             if next_packet_header.command == command
               @logger.info 'skipping package(1)'
-              continue
+              next
             end
           end
           if packet_header.command == command
@@ -338,12 +338,12 @@ class Rtde
 		Serialize::ReturnValue.unpack(payload).success
 	end
 
-	def unpack_data_package(payload)
-		if payload.length < 1
+	def unpack_data_package(payload, output_config)
+		if output_config == nil
 			@logger.error 'RTDE_DATA_PACKAGE: Missing output configuration'
 			return nil
 		end
-		output.config.unpack payload
+		output_config.unpack payload
 	end
 
 end

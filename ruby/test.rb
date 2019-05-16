@@ -11,17 +11,18 @@ con = Rtde.new '192.168.56.101', 30004
 con.connect
 puts con.connected?
 
-con.get
+
 
 version = con.get_controller_version
 
+puts con.negotiate_protocol_version
 
 if !con.send_output_setup(output_names, output_types, 125)
-    logger.error('Unable to configure output')
+    puts('Unable to configure output')
 end
 
 if !con.send_start()
-  logger.error('Unable to start synchronization')
+  puts('Unable to start synchronization')
 end
 
 begin
