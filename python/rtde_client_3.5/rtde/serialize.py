@@ -26,7 +26,7 @@ import struct
 
 class ControlHeader(object):
     __slots__ = ['command', 'size',]
-    
+
     @staticmethod
     def unpack(buf):
         rmd = ControlHeader()
@@ -36,7 +36,7 @@ class ControlHeader(object):
 
 class ControlVersion(object):
     __slots__ = ['major', 'minor', 'bugfix', 'build']
-    
+
     @staticmethod
     def unpack(buf):
         rmd = ControlVersion()
@@ -46,7 +46,7 @@ class ControlVersion(object):
 
 class ReturnValue(object):
     __slots__ = ['success']
-    
+
     @staticmethod
     def unpack(buf):
         rmd = ReturnValue()
@@ -60,7 +60,7 @@ class Message(object):
     ERROR_MESSAGE = 1
     WARNING_MESSAGE = 2
     INFO_MESSAGE = 3
-    
+
     @staticmethod
     def unpack(buf):
         rmd = Message()
@@ -122,7 +122,7 @@ class DataObject(object):
             else:
                 l.append(self.__dict__[names[i]])
         return l
-    
+
     @staticmethod
     def unpack(data, names, types):
         if len(names) != len(types):
@@ -148,9 +148,11 @@ class DataConfig(object):
     __slots__ = ['id', 'names', 'types', 'fmt']
     @staticmethod
     def unpack_recipe(buf):
+        print(buf)
         rmd = DataConfig();
         rmd.id = struct.unpack_from('>B', buf)[0]
         rmd.types = buf[1:].split(',')
+        print(rmd.types)
         rmd.fmt = '>B'
         for i in rmd.types:
             if i=='INT32':
@@ -176,7 +178,7 @@ class DataConfig(object):
             else:
                 raise ValueError('Unknown data type: ' + i)
         return rmd
-        
+
     def pack(self, state):
         l = state.pack(self.names, self.types)
         return struct.pack(self.fmt, *l)
@@ -184,4 +186,3 @@ class DataConfig(object):
     def unpack(self, data):
         li =  struct.unpack_from(self.fmt, data)
         return DataObject.unpack(li, self.names, self.types)
-    

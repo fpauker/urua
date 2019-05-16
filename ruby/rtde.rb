@@ -227,6 +227,7 @@ class Rtde
     @logger.debug 'Start recv'
     while connected?
       readable, _, xlist = IO.select([@sock], [], [@sock])
+      @logger.debug 'Readable: ' + readable.to_s
       if readable.length > 0
         more = @sock.recv(4096)
         if more.length == 0
@@ -247,7 +248,7 @@ class Rtde
         packet_header = Serialize::ControlHeader.unpack(@buf)
 
         if @buf.length >= packet_header.size
-          @logger.debug '@buf.length >= packet_header.size'
+          @logger.debug '@buf.length >= packet_header.size' + @buf.length.to_s + ">=" + packet_header.size.to_s
           packet, @buf = @buf[3..packet_header.size], @buf[packet_header.size..-1]
           @logger.debug 'Packet:' + packet.to_s
           @logger.debug 'Packet_Header_Command: ' + packet_header.command.to_s + "\n"

@@ -20,8 +20,8 @@ Daemonite.new do
       u.add_object :M, mt, OPCUA::OPTIONALPLACEHOLDER
     }
   }
-  pt = server.types.add_object_type(:PresetterType).tap{ |t|
-    t.add_variable :ManufacturerName
+  pt = server.types.add_object_type(:RobotType).tap{ |r|
+    r.add_variable :ManufacturerName
     t.add_object(:Tools, server.types.folder).tap{ |u|
       u.add_object :Tool, tt, OPCUA::OPTIONALPLACEHOLDER
     }

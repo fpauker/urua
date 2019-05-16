@@ -46,15 +46,17 @@ if args.verbose:
 
 conf = rtde_config.ConfigFile(args.config)
 output_names, output_types = conf.get_recipe('out')
-
+print(output_names)
+print(output_types)
 con = rtde.RTDE(args.host, args.port)
 con.connect()
 
 # get controller version
 con.get_controller_version()
-
+print(con.get_controller_version())
 # setup recipes
 if not con.send_output_setup(output_names, output_types, frequency = args.frequency):
+
     logging.error('Unable to configure output')
     sys.exit()
 
@@ -66,24 +68,25 @@ if not con.send_start():
 with open(args.output, 'w') as csvfile:
     writer = csv_writer.CSVWriter(csvfile, output_names, output_types)
     writer.writeheader()
-    
+
     i = 1
     keep_running = True
     while keep_running:
-        
+
         if i%args.frequency == 0:
             if args.samples > 0:
                 sys.stdout.write("\r")
-                sys.stdout.write("{:.2%} done.".format(float(i)/float(args.samples))) 
+                sys.stdout.write("{:.2%} done.".format(float(i)/float(args.samples)))
                 sys.stdout.flush()
             else:
                 sys.stdout.write("\r")
-                sys.stdout.write("{:3d} samples.".format(i)) 
+                sys.stdout.write("{:3d} samples.".format(i))
                 sys.stdout.flush()
         if args.samples > 0 and i >= args.samples:
             keep_running = False
         try:
             state = con.receive()
+            print (state)
             if state is not None:
                 writer.writerow(state)
             else:
@@ -96,5 +99,3 @@ sys.stdout.write("\rComplete!            \n")
 
 con.send_pause()
 con.disconnect()
-
-

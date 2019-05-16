@@ -211,7 +211,8 @@ class RTDE(object):
         fmt = '>HB'
         size = struct.calcsize(fmt) + len(payload)
         buf = struct.pack(fmt, size, command) + payload
-
+        print(size)
+        print(buf)
         if self.__sock is None:
             logging.error('Unable to send: not connected to Robot')
             return False
@@ -243,15 +244,15 @@ class RTDE(object):
                 logging.info('lost connection with controller')
                 self.__trigger_disconnected()
                 return None
-
+            print("buffer " +str(self.__buf))
             # unpack_from requires a buffer of at least 3 bytes
             while len(self.__buf) >= 3:
                 # Attempts to extract a packet
                 packet_header = serialize.ControlHeader.unpack(self.__buf)
-
                 if len(self.__buf) >= packet_header.size:
                     packet, self.__buf = self.__buf[3:packet_header.size], self.__buf[packet_header.size:]
                     data = self.__on_packet(packet_header.command, packet)
+                    print(data)
                     if len(self.__buf) >= 3 and command == Command.RTDE_DATA_PACKAGE:
                         next_packet_header = serialize.ControlHeader.unpack(self.__buf)
                         if next_packet_header.command == command:
@@ -338,4 +339,3 @@ class RTDE(object):
             if l1[i] != l2[i]:
                 return False
         return True
-

@@ -41,10 +41,11 @@ class ConfigFile(object):
         tree = ET.parse(self.__filename)
         root = tree.getroot()
         recipes = [Recipe.parse(r) for r in root.findall('recipe')]
+
         self.__dictionary = dict()
         for r in recipes:
             self.__dictionary[r.key] = r
-        
+
     def get_recipe(self, key):
         r = self.__dictionary[key]
         return r.names, r.types
