@@ -101,7 +101,10 @@ class Rtde
     Serialize::DataObject.create_empty variables, result.id
   end
 
-  def send_output_setup(variables, types=[], frequency = 125)
+  def send_output_setup(variables, types=[], frequency)
+    @logger.debug 'Start send_output_setup'
+    @logger.debug 'variables: ' + variables.to_s
+    @logger.debug 'types: ' + types.to_s + "\n"
     cmd = Command::RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
     payload = [frequency].pack 'G'
     payload = payload + variables.join(',')
@@ -116,10 +119,12 @@ class Rtde
     end
     result.names = variables
     @output_config = result
+    @logger.debug 'result:' + @output_config.to_s
     return true
   end
 
   def send_start
+    @logger.debug 'Start send_start'
     cmd = Command::RTDE_CONTROL_PACKAGE_START
     if sendAndReceive cmd
       @logger.info 'RTDE synchronization started'
@@ -157,7 +162,10 @@ class Rtde
   end
 
   def receive
-    return nil if @output_config
+    if @output_config == nil
+      @logger.error 'Output configuration not initialized'
+      nil
+    end
     return nil if @conn_state != ConnectionState::STARTED
     recv Command::RTDE_DATA_PACKAGE
   end
@@ -182,6 +190,7 @@ class Rtde
   end
 
   def sendAndReceive(cmd, payload = '')
+    @logger.debug 'Start sendAndReceive'
     sendall(cmd, payload) ? recv(cmd) : nil
   end
 
@@ -189,6 +198,8 @@ class Rtde
     fmt = 'S>C'
     size = ([0,0].pack fmt).length + payload.length
     buf = [size, command].pack(fmt) + payload
+    @logger.debug 'Sendall.size: ' +size.to_s
+    @logger.debug 'SendAll.buf: ' + buf.to_s + "\n"
     if !@sock
       @logger.error 'Unable to send: not connected to Robot'
       return false
@@ -196,9 +207,9 @@ class Rtde
 
     _, writable, _ = IO.select([], [@sock], [])
     if writable.length > 0
-      puts buf
-      @sock.send(buf,0)
-      puts 'send ok'
+      #@logger.debug 'buffer: ' + buf
+      @sock.sendmsg(buf)
+      @logger.debug 'sending ok'
       true
     else
       trigger_disconnected
@@ -213,6 +224,7 @@ class Rtde
   end
 
   def recv(command)
+    @logger.debug 'Start recv'
     while connected?
       readable, _, xlist = IO.select([@sock], [], [@sock])
       if readable.length > 0
@@ -229,7 +241,7 @@ class Rtde
         trigger_disconnected
         return nil
       end
-
+      @logger.debug @buf.to_s
       while @buf.length >= 3
         @logger.debug '@buf>=3'
         packet_header = Serialize::ControlHeader.unpack(@buf)
@@ -237,9 +249,10 @@ class Rtde
         if @buf.length >= packet_header.size
           @logger.debug '@buf.length >= packet_header.size'
           packet, @buf = @buf[3..packet_header.size], @buf[packet_header.size..-1]
-          puts packet
+          @logger.debug 'Packet:' + packet.to_s
+          @logger.debug 'Packet_Header_Command: ' + packet_header.command.to_s + "\n"
           data = on_packet(packet_header.command, packet)
-          puts data.to_s
+          @logger.debug 'DATA:' + data.to_s
           if @buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE
             @logger.debug '@buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE'
             next_packet_header = Serialize::ControlHeader.unpack(@buf)
@@ -288,7 +301,8 @@ class Rtde
 	end
 
 	def unpack_setup_outputs_package(payload)
-		if payload.length < 1
+    @logger.debug 'Start unpack_setup_outputs_package'
+    if payload.length < 1
 			@logger.error 'RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS: No payload'
 			return nil
 		end

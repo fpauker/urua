@@ -1,7 +1,4 @@
-# foo = ControlHeader.unpack '22a'
-# p foo.size
-# p foo.command
-
+#!/usr/bin/env ruby
 module Serialize
 
   module ControlHeader
@@ -120,9 +117,11 @@ module Serialize
   class DataConfig < Struct.new(:id, :names, :types, :fmt)
     def self.unpack_recipe(buf)
       rmd = DataConfig.new
+      puts "buffer: " + buf.to_s
       rmd.id = buf.unpack('C')[0]
       rmd.types = buf[1..-1].split(',')
       rmd.fmt = 'C'
+      puts "DataConfig: " +rmd.to_s
       rmd.types.each do |i|
         if i == 'INT32'
           rmd.fmt += 'i>'
@@ -143,9 +142,9 @@ module Serialize
         elsif i == 'UINT8'
           rmd.fmt += 'C'
         elsif i == 'IN_USE'
-          raise TypeError('An input parameter is already in use.')
+          raise TypeError 'An input parameter is already in use.'
         else
-          raise TypeError('Unknown data type: ' + i)
+          raise TypeError 'Unknown data type: ' + i
         end
       end
       rmd
