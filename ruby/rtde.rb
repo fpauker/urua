@@ -65,8 +65,8 @@ class Rtde
   def get_controller_version
     cmd = Command::RTDE_GET_URCONTROL_VERSION
     version = sendAndReceive cmd
+    @logger.debug 'Controller Version: ' + version.major.to_s + '.' + version.minor.to_s + '.' + version.bugfix.to_s
     if version
-      @logger.info 'Controller version' + version.major.to_s
       if version.major == 3 && version.minor <=2 && version.bugfix < 19171
         @logger.error 'Upgrade your controller to version 3.2.19171 or higher'
         exit
@@ -213,11 +213,8 @@ class Rtde
   end
 
   def recv(command)
-    p command
     while connected?
-      p 'conn'
       readable, _, xlist = IO.select([@sock], [], [@sock])
-      p readable
       if readable.length > 0
         more = @sock.recv(4096)
         if more.length == 0
@@ -234,7 +231,7 @@ class Rtde
       end
 
       while @buf.length >= 3
-        @logger.info '@buf>=3'
+        @logger.debug '@buf>=3'
         packet_header = Serialize::ControlHeader.unpack(@buf)
 
         if @buf.length >= packet_header.size
