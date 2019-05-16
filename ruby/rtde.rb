@@ -66,7 +66,7 @@ class Rtde
     cmd = Command::RTDE_GET_URCONTROL_VERSION
     version = sendAndReceive cmd
     if version
-      @logger.info 'Controller version' + version.major
+      @logger.info 'Controller version' + version.major.to_s
       if version.major == 3 && version.minor <=2 && version.bugfix < 19171
         @logger.error 'Upgrade your controller to version 3.2.19171 or higher'
         exit
@@ -188,7 +188,7 @@ class Rtde
   def sendall(command, payload = '')
     fmt = 'S>C'
     size = ([0,0].pack fmt).length + payload.length
-    @buf = [size, command].pack(fmt) + payload
+    buf = [size, command].pack(fmt) + payload
     if !@sock
       @logger.error 'Unable to send: not connected to Robot'
       return false
@@ -196,8 +196,8 @@ class Rtde
 
     _, writable, _ = IO.select([], [@sock], [])
     if writable.length > 0
-      puts @buf
-      @sock.send(@buf,0)
+      puts buf
+      @sock.send(buf,0)
       puts 'send ok'
       true
     else
@@ -238,13 +238,13 @@ class Rtde
         packet_header = Serialize::ControlHeader.unpack(@buf)
 
         if @buf.length >= packet_header.size
-          @logger.info '@buf.length >= packet_header.size'
+          @logger.debug '@buf.length >= packet_header.size'
           packet, @buf = @buf[3..packet_header.size], @buf[packet_header.size..-1]
           puts packet
           data = on_packet(packet_header.command, packet)
           puts data.to_s
           if @buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE
-            @logger.info '@buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE'
+            @logger.debug '@buf.length >= 3 && command == Command::RTDE_DATA_PACKAGE'
             next_packet_header = Serialize::ControlHeader.unpack(@buf)
             if next_packet_header.command == command
               @logger.info 'skipping package(1)'
@@ -270,14 +270,15 @@ class Rtde
 	end
 
 	def unpack_protocol_version_package(payload)
-    @logger.info 'unpaking protocol version package'
+    @logger.debug 'unpaking protocol version package'
 		return nil if payload.length != 1
 		Serialize::ReturnValue.unpack(payload).success
 	end
 
 	def unpack_urcontrol_version_package(payload)
-    @logger.info 'unpack urcontrol_version'
+    @logger.debug 'unpack urcontrol_version'
 		return nil if payload.length != 16
+    @logger.debug 'packet lenght ok'
 		Serialize::ControlVersion.unpack payload
 	end
 
