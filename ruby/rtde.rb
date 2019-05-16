@@ -101,7 +101,7 @@ class Rtde
     Serialize::DataObject.create_empty variables, result.id
   end
 
-  def send_output_setup(variables, types=[], frequency)
+  def send_output_setup(variables, types=[], frequency = 125)
     @logger.debug 'Start send_output_setup'
     @logger.debug 'variables: ' + variables.to_s
     @logger.debug 'types: ' + types.to_s + "\n"
@@ -224,11 +224,12 @@ class Rtde
   end
 
   def recv(command)
-    @logger.debug 'Start recv'
+    @logger.debug 'Start recv' + @buf.to_s
     while connected?
       readable, _, xlist = IO.select([@sock], [], [@sock])
       @logger.debug 'Readable: ' + readable.to_s
       if readable.length > 0
+        @logger.debug 'readable.length >0: ' + readable.length.to_s
         more = @sock.recv(4096)
         if more.length == 0
           trigger_disconnected
@@ -263,6 +264,7 @@ class Rtde
             end
           end
           if packet_header.command == command
+            @logger.debug 'returning becuase of packet_header.command == command'
             return data
           else
             @logger.info 'skipping package(2)'
@@ -307,6 +309,7 @@ class Rtde
 			@logger.error 'RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS: No payload'
 			return nil
 		end
+    @logger.debug 'Payload for unpack: ' + payload.to_s
 		Serialize::DataConfig.unpack_recipe payload
 	end
 

@@ -12,6 +12,8 @@ con.connect
 puts con.connected?
 
 version = con.get_controller_version
+sleep 5
+
 if not con.send_output_setup(output_names, output_types, 125)
     logger.error('Unable to configure output')
 end
@@ -37,5 +39,6 @@ rescue Exception => e
 end
 
 p 'Disconnecting'
+con.send_pause
 con.disconnect
 puts con.connected?

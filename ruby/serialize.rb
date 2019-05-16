@@ -117,7 +117,6 @@ module Serialize
   class DataConfig < Struct.new(:id, :names, :types, :fmt)
     def self.unpack_recipe(buf)
       rmd = DataConfig.new
-      puts "buffer: " + buf.to_s
       rmd.id = buf.unpack('C')[0]
       rmd.types = buf[1..-1].split(',')
       rmd.fmt = 'C'
