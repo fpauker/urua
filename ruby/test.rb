@@ -23,13 +23,16 @@ if not con.send_start()
   puts('Unable to start synchronization')
 end
 
+data = Serialize::DataObject.new
+
+
 begin
     # Loop indefinitely
 
     while true
       state = con.receive
       if state
-        puts state
+        puts "Timestamp:\t" + data.names["timestamp"].to_s
       end
     end
 rescue Interrupt => e

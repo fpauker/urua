@@ -27,6 +27,7 @@ class Rtde
   RTDE_PROTOCOL_VERSION = 2   #moved to Rtde class
   def initialize(hostname, port)
     @logger = Logger.new STDOUT
+    @logger.level = 'INFO'
     @hostname = hostname
     @port = port
     @conn_state = ConnectionState::DISCONNECTED
