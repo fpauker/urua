@@ -15,13 +15,11 @@ puts con.connected?
 
 version = con.get_controller_version
 
-puts con.negotiate_protocol_version
-
-if !con.send_output_setup(output_names, output_types, 125)
+if  not con.send_output_setup(output_names, output_types, 125)
     puts('Unable to configure output')
 end
 
-if !con.send_start()
+if not con.send_start()
   puts('Unable to start synchronization')
 end
 
@@ -30,8 +28,9 @@ begin
 
     while true
       state = con.receive
-      puts state
-      sleep 2
+      if state
+        puts state
+      end
     end
 rescue Interrupt => e
     print_exception(e, true)

@@ -115,12 +115,13 @@ module Serialize
   end
 
   class DataConfig < Struct.new(:id, :names, :types, :fmt)
+    @fmt=''
     def self.unpack_recipe(buf)
       rmd = DataConfig.new
       rmd.id = buf.unpack('C')[0]
       rmd.types = buf[1..-1].split(',')
       rmd.fmt = 'C'
-      puts "DataConfig: " +rmd.to_s
+      #puts "DataConfig: " +rmd.to_s
       rmd.types.each do |i|
         if i == 'INT32'
           rmd.fmt += 'i>'
@@ -146,17 +147,19 @@ module Serialize
           raise TypeError 'Unknown data type: ' + i
         end
       end
+      @fmt = rmd.fmt
       rmd
     end
 
     def pack(state)
       l = state.pack(@names, @types)
-      l.pack(fmt)
+      l.pack(@fmt)
     end
 
     def unpack(data)
-      li = data.unpack(@fmt)
-      DataObject.unpack(li, @names, @types)
+      li = data.unpack(self.fmt)
+      puts li
+      DataObject.unpack(li, self.names, self.types)
     end
   end
 

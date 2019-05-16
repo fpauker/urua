@@ -40,14 +40,13 @@ class Rtde
     return if @sock
 
     @buf = '' # buffer data in binary format
-    #self.__sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #self.__sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    #self.__sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
-    #self.__sock.settimeout(DEFAULT_TIMEOUT)
     @sock = Socket.new Socket::AF_INET, Socket::SOCK_STREAM
     @sock.setsockopt Socket::SOL_SOCKET, Socket::SO_REUSEADDR, 1
     @sock = TCPSocket.new(@hostname, @port)
     @conn_state = ConnectionState::CONNECTED
+    if not negotiate_protocol_version
+      @logger.error 'Unable to negotiate protocol version'
+    end
   end
 
   def disconnect
@@ -109,7 +108,7 @@ class Rtde
     payload = [frequency].pack 'G'
     payload = payload + variables.join(',')
     result = sendAndReceive cmd, payload
-    if types.length != 0 and not result.types != types
+    if types.length != 0 && result.types != types
       @logger.error(
         'Data type inconsistency for output setup: ' +
         types.to_s + ' - ' +
@@ -163,7 +162,7 @@ class Rtde
 
   def receive
     @logger.debug 'Start receive'
-    if @output_config == nil
+    if !@output_config
       @logger.error 'Output configuration not initialized'
       nil
     end
@@ -244,7 +243,7 @@ class Rtde
         trigger_disconnected
         return nil
       end
-      @logger.debug @buf.to_s
+      #@logger.debug @buf.to_s
       while @buf.length >= 3
         @logger.debug '@buf>=3'
         packet_header = Serialize::ControlHeader.unpack(@buf)
@@ -252,7 +251,7 @@ class Rtde
         if @buf.length >= packet_header.size
           @logger.debug '@buf.length >= packet_header.size' + @buf.length.to_s + ">=" + packet_header.size.to_s
           packet, @buf = @buf[3..packet_header.size], @buf[packet_header.size..-1]
-          @logger.debug 'Packet:' + packet.to_s
+          #@logger.debug 'Packet:' + packet.to_s
           @logger.debug 'Packet_Header_Command: ' + packet_header.command.to_s + "\n"
           data = on_packet(packet_header.command, packet)
           @logger.debug 'DATA:' + data.to_s
@@ -339,10 +338,12 @@ class Rtde
 	end
 
 	def unpack_data_package(payload, output_config)
-		if output_config == nil
+		if !output_config
 			@logger.error 'RTDE_DATA_PACKAGE: Missing output configuration'
 			return nil
 		end
+    @logger.debug "outputconfig: " + output_config.to_s
+    @logger.debug "payload: " + payload.to_s
 		output_config.unpack payload
 	end
 
