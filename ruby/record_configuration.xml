@@ -32,10 +32,10 @@
 		<field name="actual_joint_voltage" type="VECTOR6D"/>
 		<field name="actual_digital_output_bits" type="UINT64"/>
 		<field name="runtime_state" type="UINT32"/>
-<!--
+	<!--
 		<field name="output_bit_registers0_to_31" type="UINT32"/>
 		<field name="output_bit_registers32_to_63" type="UINT32"/>
-
+		
 		<field name="output_int_register_0" type="INT32"/>
 		<field name="output_int_register_1" type="INT32"/>
 		<field name="output_int_register_2" type="INT32"/>
@@ -60,7 +60,7 @@
 		<field name="output_int_register_21" type="INT32"/>
 		<field name="output_int_register_22" type="INT32"/>
 		<field name="output_int_register_23" type="INT32"/>
-
+		
 		<field name="output_double_register_0" type="DOUBLE"/>
 		<field name="output_double_register_1" type="DOUBLE"/>
 		<field name="output_double_register_2" type="DOUBLE"/>
