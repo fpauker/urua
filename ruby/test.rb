@@ -25,12 +25,11 @@ end
 
 begin
     # Loop indefinitely
-    serialize.
+
     while true
       state = con.receive
       if state
         puts state
-
       end
     end
 rescue Interrupt => e

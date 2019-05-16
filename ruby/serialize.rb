@@ -85,7 +85,9 @@ module Serialize
       offset = 0
       obj.recipe_id = data[0]
       names.each do |i|
-        obj.names[i] = data[1..-1].unpack('x' * offset + types[i])
+        #obj.names[i] = data[1..-1].unpack('x' * offset + types[i])
+        puts unpack_field(data[1..-1], offset, types[i])
+        obj.names[i] = unpack_field(data[1..-1], offset, types[i])
         offset += Serialize::get_item_size(types[i])
       end
       obj
@@ -115,7 +117,6 @@ module Serialize
   end
 
   class DataConfig < Struct.new(:id, :names, :types, :fmt)
-    @fmt=''
     def self.unpack_recipe(buf)
       rmd = DataConfig.new
       rmd.id = buf.unpack('C')[0]
@@ -152,8 +153,8 @@ module Serialize
     end
 
     def pack(state)
-      l = state.pack(@names, @types)
-      l.pack(@fmt)
+      l = state.pack(self.names, self.types)
+      l.pack(self.fmt)
     end
 
     def unpack(data)
