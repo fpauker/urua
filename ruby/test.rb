@@ -11,10 +11,12 @@ con = Rtde.new '192.168.56.101', 30004
 con.connect
 puts con.connected?
 
-version = con.get_controller_version
-sleep 5
+con.get
 
-if not con.send_output_setup(output_names, output_types, 125)
+version = con.get_controller_version
+
+
+if !con.send_output_setup(output_names, output_types, 125)
     logger.error('Unable to configure output')
 end
 

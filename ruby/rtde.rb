@@ -162,6 +162,7 @@ class Rtde
   end
 
   def receive
+    @logger.debug 'Start receive'
     if @output_config == nil
       @logger.error 'Output configuration not initialized'
       nil
