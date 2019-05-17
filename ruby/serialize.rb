@@ -84,13 +84,19 @@ module Serialize
       obj = DataObject.new
       offset = 0
       obj.recipe_id = data[0]
+
+      #puts "Datat:" + data.to_s
+
       0.upto(names.length-1) do |i|
         #obj.names[i] = data[1..-1].unpack('x' * offset + types[i])
         #puts unpack_field(data[1..-1], offset, types[i])
 
-        obj.names[i] = Serialize.unpack_field(data[1..-1], offset, types[i])
+        obj.names[names[i]] = Serialize.unpack_field(data[1..-1], offset, types[i])
+        #puts "obj"
+        #puts obj.names[i]
         offset += Serialize::get_item_size(types[i])
       end
+      #puts "obj:" + obj.names.to_s
       obj
     end
 

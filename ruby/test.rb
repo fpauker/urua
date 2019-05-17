@@ -7,7 +7,7 @@ require_relative 'rtde_conf'
 conf = ConfigFile.new "record_configuration.xml"
 output_names, output_types = conf.get_recipe('out')
 
-con = Rtde.new '192.168.56.101', 30004
+con = Rtde.new 'localhost', 30004
 con.connect
 puts con.connected?
 
@@ -23,27 +23,26 @@ if not con.send_start()
   puts('Unable to start synchronization')
 end
 
-data = Serialize::DataObject.new
+
 
 
 begin
     # Loop indefinitely
 
     while true
-      state = con.receive
-      if state
-        puts "Timestamp:\t" + data.names["timestamp"].to_s
+      data = con.receive
+      if data
+        puts data.names["timestamp"].round.to_s + "\t" + data.names["actual_TCP_pose"].to_s
       end
     end
 rescue Interrupt => e
-    print_exception(e, true)
+  puts "Interrrupt:" +e.to_s
 rescue SignalException => e
-    print_exception(e, false)
+  puts  'signal exception'
+  con.send_pause
+  con.disconnect
 rescue Exception => e
-    print_exception(e, false)
+  puts "Exception:" + e.to_s
+  con.send_pause
+  con.disconnect
 end
-
-p 'Disconnecting'
-con.send_pause
-con.disconnect
-puts con.connected?

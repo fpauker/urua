@@ -55,6 +55,7 @@ class Rtde
       @sock.close
       @sock = nil
       @conn_state = ConnectionState::DISCONNECTED
+      @logger.info "Connection closed " + @hostname +":" + @port.to_s
     end
   end
 
@@ -138,7 +139,7 @@ class Rtde
 
   def send_pause
     cmd = Command::RTDE_CONTROL_PACKAGE_PAUSE
-    sucess = sendAndReceive(cmd)
+    success = sendAndReceive(cmd)
     if success
       @logger.info 'RTDE synchronization paused'
       @conn_state = ConnectionState::PAUSED

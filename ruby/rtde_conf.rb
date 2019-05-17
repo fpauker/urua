@@ -6,7 +6,7 @@ module Recipe
   Data = Struct.new(:names, :types)
   def self.parse xmldoc
     rmd = Data.new
-    key = XPath.first(xmldoc, "//@key").to_s
+    key = XPath.match(xmldoc, "//recipe/@key")[0].to_s
     rmd.names = XPath.match(xmldoc, "//field/@name").map {|x| x.to_s }
     rmd.types = XPath.match(xmldoc, "//field/@type").map {|x| x.to_s }
     rmd
