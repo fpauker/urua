@@ -64,7 +64,7 @@ class RTDE(object):
         self.__sock = None
         self.__output_config = None
         self.__input_config = {}
-        
+
     def connect(self):
         if self.__sock:
             return
@@ -88,10 +88,10 @@ class RTDE(object):
             self.__sock.close()
             self.__sock = None
         self.__conn_state = ConnectionState.DISCONNECTED
-        
+
     def is_connected(self):
         return self.__conn_state is not ConnectionState.DISCONNECTED
-        
+
     def get_controller_version(self):
         cmd = Command.RTDE_GET_URCONTROL_VERSION
         version = self.__sendAndReceive(cmd)
@@ -102,13 +102,13 @@ class RTDE(object):
                 sys.exit()
             return version.major, version.minor, version.bugfix, version.build
         return None, None, None, None
-        
+
     def negotiate_protocol_version(self):
         cmd = Command.RTDE_REQUEST_PROTOCOL_VERSION
         payload = struct.pack('>H', RTDE_PROTOCOL_VERSION)
         success = self.__sendAndReceive(cmd, payload)
         return success
-        
+
     def send_input_setup(self, variables, types=[]):
         cmd = Command.RTDE_CONTROL_PACKAGE_SETUP_INPUTS
         payload = ','.join(variables)
@@ -121,7 +121,7 @@ class RTDE(object):
         result.names = variables
         self.__input_config[result.id] = result
         return serialize.DataObject.create_empty(variables, result.id)
-        
+
     def send_output_setup(self, variables, types=[], frequency=125):
         cmd = Command.RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS
         payload = struct.pack('>d', frequency)
@@ -135,7 +135,7 @@ class RTDE(object):
         result.names = variables
         self.__output_config = result
         return True
-        
+
     def send_start(self):
         cmd = Command.RTDE_CONTROL_PACKAGE_START
         success = self.__sendAndReceive(cmd)
@@ -145,7 +145,7 @@ class RTDE(object):
         else:
             logging.error('RTDE synchronization failed to start')
         return success
-        
+
     def send_pause(self):
         cmd = Command.RTDE_CONTROL_PACKAGE_PAUSE
         success = self.__sendAndReceive(cmd)
@@ -200,22 +200,23 @@ class RTDE(object):
             return self.__unpack_data_package(payload, self.__output_config)
         else:
             logging.error('Unknown package command: ' + str(cmd))
-            
+
     def __sendAndReceive(self, cmd, payload=''):
         if self.__sendall(cmd, payload):
             return self.__recv(cmd)
         else:
             return None
-        
+
     def __sendall(self, command, payload=''):
         fmt = '>HB'
         size = struct.calcsize(fmt) + len(payload)
         buf = struct.pack(fmt, size, command) + payload
-        
+        print(size)
+        print(buf)
         if self.__sock is None:
             logging.error('Unable to send: not connected to Robot')
             return False
-        
+
         _, writable, _ = select.select([], [self.__sock], [], DEFAULT_TIMEOUT)
         if len(writable):
             self.__sock.sendall(buf)
@@ -223,12 +224,12 @@ class RTDE(object):
         else:
             self.__trigger_disconnected()
             return False
-        
+
     def has_data(self):
         timeout = 0
         readable, _, _ = select.select([self.__sock], [], [], timeout)
         return len(readable)!=0
-        
+
     def __recv(self, command):
         while self.is_connected():
             readable, _, xlist = select.select([self.__sock], [], [self.__sock], DEFAULT_TIMEOUT)
@@ -243,15 +244,15 @@ class RTDE(object):
                 logging.info('lost connection with controller')
                 self.__trigger_disconnected()
                 return None
-
+            print("buffer " +str(self.__buf))
             # unpack_from requires a buffer of at least 3 bytes
             while len(self.__buf) >= 3:
                 # Attempts to extract a packet
                 packet_header = serialize.ControlHeader.unpack(self.__buf)
-                
                 if len(self.__buf) >= packet_header.size:
                     packet, self.__buf = self.__buf[3:packet_header.size], self.__buf[packet_header.size:]
                     data = self.__on_packet(packet_header.command, packet)
+                    print(data)
                     if len(self.__buf) >= 3 and command == Command.RTDE_DATA_PACKAGE:
                         next_packet_header = serialize.ControlHeader.unpack(self.__buf)
                         if next_packet_header.command == command:
@@ -264,73 +265,73 @@ class RTDE(object):
                 else:
                     break
         return None
-    
+
     def __trigger_disconnected(self):
         logging.info("RTDE disconnected")
         self.disconnect() #clean-up
-    
+
     def __unpack_protocol_version_package(self, payload):
         if len(payload) != 1:
             logging.error('RTDE_REQUEST_PROTOCOL_VERSION: Wrong payload size')
             return None
         result = serialize.ReturnValue.unpack(payload)
         return result.success
-    
+
     def __unpack_urcontrol_version_package(self, payload):
         if len(payload) != 16:
             logging.error('RTDE_GET_URCONTROL_VERSION: Wrong payload size')
             return None
         version = serialize.ControlVersion.unpack(payload)
         return version
-    
+
     def __unpack_text_message(self, payload):
         if len(payload) < 1:
             logging.error('RTDE_TEXT_MESSAGE: No payload')
             return None
         msg = serialize.Message.unpack(payload)
-        if(msg.level == serialize.Message.EXCEPTION_MESSAGE or 
+        if(msg.level == serialize.Message.EXCEPTION_MESSAGE or
            msg.level == serialize.Message.ERROR_MESSAGE):
             logging.error(msg.source + ': ' + msg.message)
         elif msg.level == serialize.Message.WARNING_MESSAGE:
             logging.warning(msg.source + ': ' + msg.message)
         elif msg.level == serialize.Message.INFO_MESSAGE:
             logging.info(msg.source + ': ' + msg.message)
-    
+
     def __unpack_setup_outputs_package(self, payload):
         if len(payload) < 1:
             logging.error('RTDE_CONTROL_PACKAGE_SETUP_OUTPUTS: No payload')
             return None
         output_config = serialize.DataConfig.unpack_recipe(payload)
         return output_config
-    
+
     def __unpack_setup_inputs_package(self, payload):
         if len(payload) < 1:
             logging.error('RTDE_CONTROL_PACKAGE_SETUP_INPUTS: No payload')
             return None
         input_config = serialize.DataConfig.unpack_recipe(payload)
         return input_config
-    
+
     def __unpack_start_package(self, payload):
         if len(payload) != 1:
             logging.error('RTDE_CONTROL_PACKAGE_START: Wrong payload size')
             return None
         result = serialize.ReturnValue.unpack(payload)
         return result.success
-    
+
     def __unpack_pause_package(self, payload):
         if len(payload) != 1:
             logging.error('RTDE_CONTROL_PACKAGE_PAUSE: Wrong payload size')
             return None
         result = serialize.ReturnValue.unpack(payload)
         return result.success
-    
+
     def __unpack_data_package(self, payload, output_config):
         if output_config is None:
             logging.error('RTDE_DATA_PACKAGE: Missing output configuration')
             return None
         output = output_config.unpack(payload)
         return output
-    
+
     def __list_equals(self, l1, l2):
         if len(l1) != len(l2):
             return False
@@ -338,4 +339,3 @@ class RTDE(object):
             if l1[i] != l2[i]:
                 return False
         return True
-    
