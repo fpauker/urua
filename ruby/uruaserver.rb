@@ -1,27 +1,29 @@
 #!/usr/bin/ruby
 #require_relative '../lib/opcua/server'
 require 'opcua/server'
+require 'ur-sock'
 
 Daemonite.new do
 
   server = OPCUA::Server.new
   server.add_namespace "https://centurio.work/ur10evva"
 
-  mt = server.types.add_object_type(:MeasurementType).tap{ |t|
-    t.add_variable :SollWertX
-    t.add_variable :SollWertY
-    t.add_variable :SollWertZ
+  tt = server.types.add_object_type(:TargetType).tap{ |t|
+    t.add_variable :JointPositions
+    t.add_variable :JointVelocities
+    t.add_variable :JointAcceleration
+    t.add_variable :JointCurrents
+    t.add_variable :JointMoments
   }
-  tt = server.types.add_object_type(:ToolType).tap{ |t|
-    t.add_variable :ToolNumber
-    t.add_variable :DuploNumber
-    t.add_variable :testValue1
-    t.add_object(:Measurements, server.types.folder).tap{ |u|
-      u.add_object :M, mt, OPCUA::OPTIONALPLACEHOLDER
-    }
+
+  a = server.types.add_object_type(:ActualType).tap{ |t|
+    t.add_variable :JointPositions
+    t.add_variable :JointVelocities
+    t.add_variable :JointCurrents
   }
   pt = server.types.add_object_type(:RobotType).tap{ |r|
     r.add_variable :ManufacturerName
+
     t.add_object(:Tools, server.types.folder).tap{ |u|
       u.add_object :Tool, tt, OPCUA::OPTIONALPLACEHOLDER
     }
