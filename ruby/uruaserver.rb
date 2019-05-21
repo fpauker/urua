@@ -5,7 +5,7 @@ require 'opcua/server'
 Daemonite.new do
 
   server = OPCUA::Server.new
-  server.add_namespace "https://centurio.work/ur10ev"
+  server.add_namespace "https://centurio.work/ur10evva"
 
   mt = server.types.add_object_type(:MeasurementType).tap{ |t|
     t.add_variable :SollWertX

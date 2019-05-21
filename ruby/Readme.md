@@ -4,15 +4,16 @@ OPC UA Server for Universal Robots
 
 ## Getting Started
 
-A simple ruby server, which uses UR scripts. The commands are sent using TCP socket on port 30002.
+A simple ruby server, which uses th ur-sock and opcua-smart library.
 
 ### Prerequisites & Intallation
 
 To run the server we need the following packages:
 
-* ruby gem:
+* ruby gems:
 ```
 gem install opcua
+gem install ur-sock
 ```
 
 * Socket package
