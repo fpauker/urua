@@ -15,36 +15,28 @@ Daemonite.new do
     t.add_variable :JointCurrents
     t.add_variable :JointMoments
   }
-
-  a = server.types.add_object_type(:ActualType).tap{ |t|
+  #causes errors, because both Jointpositions got the same nodeid
+  at = server.types.add_object_type(:ActualType).tap{ |t|
     t.add_variable :JointPositions
     t.add_variable :JointVelocities
     t.add_variable :JointCurrents
   }
-  pt = server.types.add_object_type(:RobotType).tap{ |r|
-    r.add_variable :ManufacturerName
 
-    t.add_object(:Tools, server.types.folder).tap{ |u|
-      u.add_object :Tool, tt, OPCUA::OPTIONALPLACEHOLDER
-    }
+  rt = server.types.add_object_type(:RobotType).tap{ |r|
+    r.add_variable :ManufacturerName
+    #r.add_object :Target, tt, OPCUA::MANDATORY
+    #r.add_object :Actual, at, OPCUA::MANDATORY
   }
 
-  tools = server.objects.instantiate(:KalimatC34, pt).find(:Tools)
+  robot = server.objects.manifest(:UR10e, rt)
+  robot.manifest(:Target, tt)
+  actual = robot.find(:Target)
+  tjp = actual.find(:JointPositions)
 
-  t1 = tools.instantiate(:Tool1,tt)
-  t2 = tools.instantiate(:Tool2,tt)
-  t3 = tools.instantiate(:Tool3,tt)
-
-  tn = t1.find(:ToolNumber)
-
-  measurments_t1 = t1.find(:Measurements)
-  measurments_t1.instantiate(:M1,mt)
-  measurments_t1.instantiate(:M2,mt)
-
-  p tn.id
+  p tjp.id
 
   run do
     sleep server.run
-    tn.value = Time.now
+    #tn.value = Time.now
   end
 end.loop!
