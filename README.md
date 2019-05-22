@@ -34,6 +34,12 @@ Install opcua-smart for ruby (https://github.com/etm/opcua-smart)
 gem install opcua
 ```
 
+Install Universal Robot communication library (https://github.com/fpauker/ur-sock)
+```
+gem install ur-sock
+```
+
+
 ## Contributing
 
 Please read [CONTRIBUTING.md](https://gist.github.com/PurpleBooth/b24679402957c63ec426) for details on our code of conduct, and the process for submitting pull requests to us.
