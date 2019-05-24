@@ -1,24 +1,18 @@
 #!/usr/bin/ruby
 #require 'opcua/server'
 require_relative '../opcua-smart/lib/opcua/server'
-require 'ur-sock'
+require_relative '../ur-sock/lib/ur-sock'
+#require 'ur-sock'
 
 Daemonite.new do
 
   server = OPCUA::Server.new
   server.add_namespace "https://centurio.work/ur10evva"
 
-  tt = server.types.add_object_type(:TargetType).tap{ |t|
-    t.add_variable :JointPositions
-    t.add_variable :JointVelocities
-    t.add_variable :JointAcceleration
-    t.add_variable :JointCurrents
-    t.add_variable :JointMoments
-  }
-  at = server.types.add_object_type(:ActualType).tap{ |t|
-    t.add_variable :JointPositions
-    t.add_variable :JointVelocities
-    t.add_variable :JointCurrents
+  st = server.types.add_object_type(:States).tap{ |s|
+    s.add_variable :RobotMode
+    s.add_variable :JointMode
+    s.add_variable :SafetyMode
   }
 
   tcp = server.types.add_object_type(:TCP).tap{ |t|
@@ -81,7 +75,6 @@ Daemonite.new do
 
   rt = server.types.add_object_type(:RobotType).tap{ |r|
     r.add_variable :ManufacturerName
-    r.add_variable :RobotMode
     r.add_variable :MainVoltage
     r.add_variable :RobotVoltage
     r.add_variable :RobotCurrent
@@ -101,12 +94,18 @@ Daemonite.new do
   robot = server.objects.manifest(:UR10e, rt)
 
   robot.find(:ManufacturerName).value = 'Universal Robot'
-  rm = robot.find(:RobotMode)
   mv = robot.find(:MainVoltage)
   rv = robot.find(:RobotVoltage)
   rc = robot.find(:RobotCurrent)
   jv = robot.find(:JointVoltage)
   ov = robot.find(:Override)
+
+  #State
+  st = robot.manifest(:States, st)
+  rm = st.find(:RobotMode)
+  sm = st.find(:SafetyMode)
+  jm = st.find(:JointMode)
+
   #Axes
   robot.manifest(:Axes, ax)
   #TCP
@@ -154,46 +153,55 @@ Daemonite.new do
   end
 
   run do
-    server.run
-    data = rtde.receive
-    if data
-      #robot object
-      rm.value = rtde.get_robotmode[data['robot_mode']]
-      mv.value = data["actual_main_voltage"]
-      rv.value = data["actual_robot_voltage"]
-      rc.value = data["actual_robot_current"]
-      jv.value = data["actual_joint_voltage"]
+    begin
 
-      #axes object
+      server.run
+      data = rtde.receive
+      if data
+        #robot object
+        mv.value = data["actual_main_voltage"]
+        rv.value = data["actual_robot_voltage"]
+        rc.value = data["actual_robot_current"]
+        jv.value = data["actual_joint_voltage"]
 
-      #TCP object
-      #Actual TCP Pose
-      atp = data['actual_TCP_pose'].to_s
-      ap.value = atp
-      atpa = atp.gsub!(/^\[|\]?$/, '').split(",")
-      apa.each_with_index do |a,i|
-        a.value = atpa[i].to_f
+
+        #State objects
+        rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
+        sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
+        jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
+        #axes object
+
+        #TCP object
+        #Actual TCP Pose
+        atp = data['actual_TCP_pose'].to_s
+        ap.value = atp
+        atpa = atp[1..-2].split(",")
+        apa.each_with_index do |a,i|
+          a.value = atpa[i].to_f
+        end
+        #Actual TCP Speed
+        ats = data['actual_TCP_speed'].to_s
+        as.value = ats
+        atsa = ats.gsub!(/^\[|\]?$/, '').split(",")
+        asa.each_with_index do |a,i|
+          a.value = atsa[i].to_f
+        end
+        #Actual TCP Force
+        atf = data['actual_TCP_force'].to_s
+        af.value = atf
+        atfa = atf.gsub!(/^\[|\]?$/, '').split(",")
+        afa.each_with_index do |a,i|
+          a.value = atfa[i].to_f
+        end
+
+
+
+        #write values
+        speed["speed_slider_fraction"] = ov.value
+        rtde.send(speed)
       end
-      #Actual TCP Speed
-      ats = data['actual_TCP_speed'].to_s
-      as.value = ats
-      atsa = ats.gsub!(/^\[|\]?$/, '').split(",")
-      asa.each_with_index do |a,i|
-        a.value = atsa[i].to_f
-      end
-      #Actual TCP Force
-      atf = data['actual_TCP_force'].to_s
-      af.value = atf
-      atfa = atf.gsub!(/^\[|\]?$/, '').split(",")
-      afa.each_with_index do |a,i|
-        a.value = atfa[i].to_f
-      end
-
-
-
-      #write values
-      speed["speed_slider_fraction"] = ov.value
-      rtde.send(speed)
+    rescue => e
+      puts e.message
     end
   end
 end.loop!
