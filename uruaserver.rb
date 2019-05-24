@@ -1,5 +1,6 @@
 #!/usr/bin/ruby
-require 'opcua/server'
+#require 'opcua/server'
+require_relative '../opcua-smart/lib/opcua/server'
 require 'ur-sock'
 
 Daemonite.new do
@@ -29,14 +30,17 @@ Daemonite.new do
     r.add_variable :RobotCurrent
     r.add_variable :JointVoltage
     r.add_variable :Override
-    #r.add_object :Target, tt, OPCUA::MANDATORY
-    #r.add_object :Actual, at, OPCUA::MANDATORY
+    r.add_object :Target, tt, OPCUA::MANDATORY
+    r.add_object :Actual, at, OPCUA::MANDATORY
+    r.add_method :testMethod, test1: OPCUA::TYPES::STRING, test2: OPCUA::TYPES::DATETIME do |node, test1, test2|
+      puts 'me'
+      # do something
+    end
   }
 
   #populating the adress space
   robot = server.objects.manifest(:UR10e, rt)
   robot.find(:ManufacturerName).value = 'Universal Robot'
-  robot.manifest(:Target, tt)
   rm = robot.find(:RobotMode)
   mv = robot.find(:MainVoltage)
   rv = robot.find(:RobotVoltage)
