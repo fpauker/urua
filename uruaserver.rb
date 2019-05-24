@@ -21,7 +21,7 @@ Daemonite.new do
     t.add_variable :JointCurrents
   }
 
-  tcp = server.types.add_object_type(:TCP).tap{|t|#
+  tcp = server.types.add_object_type(:TCP).tap{ |t|
     t.add_object(:ActualPose, server.types.folder).tap{ |p|
       p.add_variable :TCPPose
       p.add_variable :Axis1
@@ -49,6 +49,7 @@ Daemonite.new do
       f.add_variable :Axis5
       f.add_variable :Axis6
     }
+
   }
 
   ax = server.types.add_object_type(:AxisType).tap{|a|
@@ -85,7 +86,7 @@ Daemonite.new do
     r.add_variable :RobotVoltage
     r.add_variable :RobotCurrent
     r.add_variable :JointVoltage
-    r.add_variable :Override
+    r.add_variable_rw :Override
     #r.add_object :Target, tt, OPCUA::MANDATORY
     #r.add_object :Actual, at, OPCUA::MANDATORY
 
@@ -118,6 +119,10 @@ Daemonite.new do
   asf = tcp.find(:ActualSpeed)
   as = asf.find(:TCPSpeed)
   asa = [asf.find(:Axis1),asf.find(:Axis2),asf.find(:Axis3),asf.find(:Axis4),asf.find(:Axis5),asf.find(:Axis6)]
+  #TCP Force
+  aff = tcp.find(:ActualForce)
+  af = aff.find(:TCPForce)
+  afa = [aff.find(:Axis1),aff.find(:Axis2),aff.find(:Axis3),aff.find(:Axis4),aff.find(:Axis5),aff.find(:Axis6)]
 
 
   #loading config file
@@ -176,6 +181,14 @@ Daemonite.new do
       asa.each_with_index do |a,i|
         a.value = atsa[i].to_f
       end
+      #Actual TCP Force
+      atf = data['actual_TCP_force'].to_s
+      af.value = atf
+      atfa = atf.gsub!(/^\[|\]?$/, '').split(",")
+      afa.each_with_index do |a,i|
+        a.value = atfa[i].to_f
+      end
+
 
 
       #write values
