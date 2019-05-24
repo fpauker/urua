@@ -109,14 +109,17 @@ Daemonite.new do
   #Axes
   robot.manifest(:Axes, ax)
   #TCP
-  apf = robot.manifest(:TCP, tcp).find(:ActualPose)
+  #TCP Pose
+  tcp = robot.manifest(:TCP, tcp)
+  apf = tcp.find(:ActualPose)
   ap = apf.find(:TCPPose)
-  ap1 = apf.find(:Axis1)
-  ap2 = apf.find(:Axis2)
-  ap3 = apf.find(:Axis3)
-  ap4 = apf.find(:Axis4)
-  ap5 = apf.find(:Axis5)
-  ap6 = apf.find(:Axis6)
+  apa = [apf.find(:Axis1),apf.find(:Axis2),apf.find(:Axis3),apf.find(:Axis4),apf.find(:Axis5),apf.find(:Axis6)]
+  #TCP Speed
+  asf = tcp.find(:ActualSpeed)
+  as = asf.find(:TCPSpeed)
+  asa = [asf.find(:Axis1),asf.find(:Axis2),asf.find(:Axis3),asf.find(:Axis4),asf.find(:Axis5),asf.find(:Axis6)]
+
+
   #loading config file
   conf = UR::XMLConfigFile.new "ua.conf.xml"
   output_names, output_types = conf.get_recipe('out')
@@ -163,12 +166,18 @@ Daemonite.new do
       atp = data['actual_TCP_pose'].to_s
       ap.value = atp
       atpa = atp.gsub!(/^\[|\]?$/, '').split(",")
-      ap1.value = atpa[0].to_f
-      ap2.value = atpa[1].to_f
-      ap3.value = atpa[2].to_f
-      ap4.value = atpa[3].to_f
-      ap5.value = atpa[4].to_f
-      ap6.value = atpa[5].to_f
+      apa.each_with_index do |a,i|
+        a.value = atpa[i].to_f
+      end
+      #Actual TCP Speed
+      ats = data['actual_TCP_speed'].to_s
+      as.value = ats
+      atsa = ats.gsub!(/^\[|\]?$/, '').split(",")
+      asa.each_with_index do |a,i|
+        a.value = atsa[i].to_f
+      end
+
+
       #write values
       speed["speed_slider_fraction"] = ov.value
       rtde.send(speed)
