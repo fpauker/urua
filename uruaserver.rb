@@ -13,6 +13,7 @@ Daemonite.new do
     s.add_variable :RobotMode
     s.add_variable :JointMode
     s.add_variable :SafetyMode
+    s.add_variable :ToolMode
   }
 
   tcp = server.types.add_object_type(:TCP).tap{ |t|
@@ -47,7 +48,8 @@ Daemonite.new do
   }
 
   ax = server.types.add_object_type(:AxisType).tap{|a|
-    a.add_object(:Positions, server.types.folder).tap{ |p|
+    a.add_object(:ActualPositions, server.types.folder).tap{ |p|
+      p.add_variable :AxisPositions
       p.add_variable :Axis1
       p.add_variable :Axis2
       p.add_variable :Axis3
@@ -55,7 +57,8 @@ Daemonite.new do
       p.add_variable :Axis5
       p.add_variable :Axis6
     }
-    a.add_object(:Velocities, server.types.folder).tap{ |v|
+    a.add_object(:ActualVelocities, server.types.folder).tap{ |v|
+      v.add_variable :AxisVelocities
       v.add_variable :Axis1
       v.add_variable :Axis2
       v.add_variable :Axis3
@@ -63,7 +66,8 @@ Daemonite.new do
       v.add_variable :Axis5
       v.add_variable :Axis6
     }
-    a.add_object(:Currents, server.types.folder).tap{ |c|
+    a.add_object(:ActualCurrents, server.types.folder).tap{ |c|
+      c.add_variable :AxisCurrents
       c.add_variable :Axis1
       c.add_variable :Axis2
       c.add_variable :Axis3
@@ -80,6 +84,7 @@ Daemonite.new do
     r.add_variable :RobotCurrent
     r.add_variable :JointVoltage
     r.add_variable_rw :Override
+    r.add_variable :SpeedScaling
     #r.add_object :Target, tt, OPCUA::MANDATORY
     #r.add_object :Actual, at, OPCUA::MANDATORY
 
@@ -92,22 +97,27 @@ Daemonite.new do
 
   #populating the adress space
   robot = server.objects.manifest(:UR10e, rt)
-
+  #Robot object
   robot.find(:ManufacturerName).value = 'Universal Robot'
   mv = robot.find(:MainVoltage)
   rv = robot.find(:RobotVoltage)
   rc = robot.find(:RobotCurrent)
   jv = robot.find(:JointVoltage)
   ov = robot.find(:Override)
-
+  ss = robot.find(:SpeedScaling)
   #State
   st = robot.manifest(:States, st)
   rm = st.find(:RobotMode)
   sm = st.find(:SafetyMode)
   jm = st.find(:JointMode)
+  tm = st.find(:ToolMode)
 
   #Axes
-  robot.manifest(:Axes, ax)
+  axes = robot.manifest(:Axes, ax)
+  aapf = axes.find(:ActualPositions)
+  aap = aapf.find(:AxisPositions)
+  aapa = [aapf.find(:Axis1),aapf.find(:Axis2),aapf.find(:Axis3),aapf.find(:Axis4),aapf.find(:Axis5),aapf.find(:Axis6)]
+
   #TCP
   #TCP Pose
   tcp = robot.manifest(:TCP, tcp)
@@ -159,17 +169,26 @@ Daemonite.new do
       data = rtde.receive
       if data
         #robot object
-        mv.value = data["actual_main_voltage"]
-        rv.value = data["actual_robot_voltage"]
-        rc.value = data["actual_robot_current"]
-        jv.value = data["actual_joint_voltage"]
-
+        mv.value = data['actual_main_voltage']
+        rv.value = data['actual_robot_voltage']
+        rc.value = data['actual_robot_current']
+        jv.value = data['actual_joint_voltage']
+        ss.value = data['speed_scaling']
 
         #State objects
         rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
-        #axes object
+        tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
+
+        #Axes object
+        aq = data['actual_q'].to_s
+        aap.value = aq
+        aqa = aq[1..-2].split(",")
+        aapa.each_with_index do |a,i|
+          a.value = aqa[i].to_f  
+        end
+
 
         #TCP object
         #Actual TCP Pose
