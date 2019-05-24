@@ -15,11 +15,67 @@ Daemonite.new do
     t.add_variable :JointCurrents
     t.add_variable :JointMoments
   }
-  #causes errors, because both Jointpositions got the same nodeid
   at = server.types.add_object_type(:ActualType).tap{ |t|
     t.add_variable :JointPositions
     t.add_variable :JointVelocities
     t.add_variable :JointCurrents
+  }
+
+  tcp = server.types.add_object_type(:TCP).tap{|t|#
+    t.add_object(:ActualPose, server.types.folder).tap{ |p|
+      p.add_variable :TCPPose
+      p.add_variable :Axis1
+      p.add_variable :Axis2
+      p.add_variable :Axis3
+      p.add_variable :Axis4
+      p.add_variable :Axis5
+      p.add_variable :Axis6
+    }
+    t.add_object(:ActualSpeed, server.types.folder).tap{ |s|
+      s.add_variable :TCPSpeed
+      s.add_variable :Axis1
+      s.add_variable :Axis2
+      s.add_variable :Axis3
+      s.add_variable :Axis4
+      s.add_variable :Axis5
+      s.add_variable :Axis6
+    }
+    t.add_object(:ActualForce, server.types.folder).tap{ |f|
+      f.add_variable :TCPForce
+      f.add_variable :Axis1
+      f.add_variable :Axis2
+      f.add_variable :Axis3
+      f.add_variable :Axis4
+      f.add_variable :Axis5
+      f.add_variable :Axis6
+    }
+  }
+
+  ax = server.types.add_object_type(:AxisType).tap{|a|
+    a.add_object(:Positions, server.types.folder).tap{ |p|
+      p.add_variable :Axis1
+      p.add_variable :Axis2
+      p.add_variable :Axis3
+      p.add_variable :Axis4
+      p.add_variable :Axis5
+      p.add_variable :Axis6
+    }
+    a.add_object(:Velocities, server.types.folder).tap{ |v|
+      v.add_variable :Axis1
+      v.add_variable :Axis2
+      v.add_variable :Axis3
+      v.add_variable :Axis4
+      v.add_variable :Axis5
+      v.add_variable :Axis6
+    }
+    a.add_object(:Currents, server.types.folder).tap{ |c|
+      c.add_variable :Axis1
+      c.add_variable :Axis2
+      c.add_variable :Axis3
+      c.add_variable :Axis4
+      c.add_variable :Axis5
+      c.add_variable :Axis6
+    }
   }
 
   rt = server.types.add_object_type(:RobotType).tap{ |r|
@@ -30,16 +86,19 @@ Daemonite.new do
     r.add_variable :RobotCurrent
     r.add_variable :JointVoltage
     r.add_variable :Override
-    r.add_object :Target, tt, OPCUA::MANDATORY
-    r.add_object :Actual, at, OPCUA::MANDATORY
+    #r.add_object :Target, tt, OPCUA::MANDATORY
+    #r.add_object :Actual, at, OPCUA::MANDATORY
+
     r.add_method :testMethod, test1: OPCUA::TYPES::STRING, test2: OPCUA::TYPES::DATETIME do |node, test1, test2|
       puts 'me'
+      puts 'test'
       # do something
     end
   }
 
   #populating the adress space
   robot = server.objects.manifest(:UR10e, rt)
+
   robot.find(:ManufacturerName).value = 'Universal Robot'
   rm = robot.find(:RobotMode)
   mv = robot.find(:MainVoltage)
@@ -47,17 +106,26 @@ Daemonite.new do
   rc = robot.find(:RobotCurrent)
   jv = robot.find(:JointVoltage)
   ov = robot.find(:Override)
-  actual = robot.find(:Target)
-  tjp = actual.find(:JointPositions)
-
-
+  #Axes
+  robot.manifest(:Axes, ax)
+  #TCP
+  apf = robot.manifest(:TCP, tcp).find(:ActualPose)
+  ap = apf.find(:TCPPose)
+  ap1 = apf.find(:Axis1)
+  ap2 = apf.find(:Axis2)
+  ap3 = apf.find(:Axis3)
+  ap4 = apf.find(:Axis4)
+  ap5 = apf.find(:Axis5)
+  ap6 = apf.find(:Axis6)
   #loading config file
   conf = UR::XMLConfigFile.new "ua.conf.xml"
   output_names, output_types = conf.get_recipe('out')
 
   #Connecting to universal robot
-  dash = UR::Dash.new('192.168.56.101').connect
-  rtde = UR::Rtde.new('192.168.56.101').connect
+  # dash = UR::Dash.new('192.168.56.10').connect
+  # rtde = UR::Rtde.new('192.168.56.101').connect
+  dash = UR::Dash.new('localhost').connect
+  rtde = UR::Rtde.new('localhost').connect
 
   return if !dash || !rtde
 
@@ -81,14 +149,26 @@ Daemonite.new do
     server.run
     data = rtde.receive
     if data
+      #robot object
       rm.value = rtde.get_robotmode[data['robot_mode']]
-      tjp.value = data["actual_q"].to_s
       mv.value = data["actual_main_voltage"]
       rv.value = data["actual_robot_voltage"]
       rc.value = data["actual_robot_current"]
       jv.value = data["actual_joint_voltage"]
 
+      #axes object
 
+      #TCP object
+      #Actual TCP Pose
+      atp = data['actual_TCP_pose'].to_s
+      ap.value = atp
+      atpa = atp.gsub!(/^\[|\]?$/, '').split(",")
+      ap1.value = atpa[0].to_f
+      ap2.value = atpa[1].to_f
+      ap3.value = atpa[2].to_f
+      ap4.value = atpa[3].to_f
+      ap5.value = atpa[4].to_f
+      ap6.value = atpa[5].to_f
       #write values
       speed["speed_slider_fraction"] = ov.value
       rtde.send(speed)
