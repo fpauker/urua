@@ -16,18 +16,20 @@ Daemonite.new do
 
     p.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
       # do something
+
     end
-    p.add_method :StartProgram, program: OPCUA::TYPES::STRING do |node, program|
-      # do something
+    p.add_method :StartProgram do
+      dash.start_program
     end
-    p.add_method :StopProgram, program: OPCUA::TYPES::STRING do |node, program|
-      # do something
+    p.add_method :StopProgram do
+      dash.stop_program
     end
-    p.add_method :PauseProgram, program: OPCUA::TYPES::STRING do |node, program|
-      # do something
+    p.add_method :PauseProgram do
+      dash.pause_program
     end
   }
 
+  #StateObjectType
   st = server.types.add_object_type(:States).tap{ |s|
     s.add_variable :RobotMode
     s.add_variable :RobotState
@@ -36,7 +38,7 @@ Daemonite.new do
     s.add_variable :ToolMode
     s.add_variable :ProgramState
   }
-
+  #TCP ObjectType
   tcp = server.types.add_object_type(:TCP).tap{ |t|
     t.add_object(:ActualPose, server.types.folder).tap{ |p|
       p.add_variable :TCPPose
@@ -67,7 +69,7 @@ Daemonite.new do
     }
 
   }
-
+  #AxisObjectType
   ax = server.types.add_object_type(:AxisType).tap{|a|
     a.add_object(:ActualPositions, server.types.folder).tap{ |p|
       p.add_variable :AxisPositions
@@ -96,8 +98,17 @@ Daemonite.new do
       c.add_variable :Axis5
       c.add_variable :Axis6
     }
+    a.add_object(:ActualVoltage, server.types.folder).tap{ |v|
+      v.add_variable :AxisVoltage
+      v.add_variable :Axis1
+      v.add_variable :Axis2
+      v.add_variable :Axis3
+      v.add_variable :Axis4
+      v.add_variable :Axis5
+      v.add_variable :Axis6
+    }
   }
-
+  #RobotObjectType
   rt = server.types.add_object_type(:RobotType).tap{ |r|
     r.add_variable :ManufacturerName
     r.add_variable :MainVoltage
@@ -143,9 +154,22 @@ Daemonite.new do
 
   #Axes
   axes = robot.manifest(:Axes, ax)
+  #Positions
   aapf = axes.find(:ActualPositions)
   aap = aapf.find(:AxisPositions)
   aapa = [aapf.find(:Axis1),aapf.find(:Axis2),aapf.find(:Axis3),aapf.find(:Axis4),aapf.find(:Axis5),aapf.find(:Axis6)]
+  #Velocities
+  avelf = axes.find(:ActualVelocities)
+  avel = avelf.find(:AxisVelocities)
+  avela = [avelf.find(:Axis1),avelf.find(:Axis2),avelf.find(:Axis3),avelf.find(:Axis4),avelf.find(:Axis5),avelf.find(:Axis6)]
+  #Currents
+  acurf = axes.find(:ActualCurrents)
+  acur = acurf.find(:AxisCurrents)
+  acura = [acurf.find(:Axis1),acurf.find(:Axis2),acurf.find(:Axis3),acurf.find(:Axis4),acurf.find(:Axis5),acurf.find(:Axis6)]
+  #Voltage
+  avolf = axes.find(:ActualVoltage)
+  avol = avolf.find(:AxisVoltage)
+  avola = [avolf.find(:Axis1),avolf.find(:Axis2),avolf.find(:Axis3),avolf.find(:Axis4),avolf.find(:Axis5),avolf.find(:Axis6)]
 
   #TCP
   #TCP Pose
@@ -206,14 +230,13 @@ Daemonite.new do
       data = rtde.receive
       if data
         #robot object
+
+
         mv.value = data['actual_main_voltage']
         rv.value = data['actual_robot_voltage']
         rc.value = data['actual_robot_current']
         jv.value = data['actual_joint_voltage']
         ss.value = data['speed_scaling']
-
-        #Program object
-
 
 
         #State objects
