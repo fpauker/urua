@@ -256,6 +256,28 @@ Daemonite.new do
           a.value = aqa[i].to_f
         end
 
+        aqd = data['actual_qd'].to_s
+        avel.value = aqd
+        aqda = aqd[1..-2].split(",")
+        avela.each_with_index do |a,i|
+          a.value = aqda[i].to_f
+        end
+
+        ajv = data['actual_joint_voltage'].to_s
+        avol.value = ajv
+        ajva = ajv[1..-2].split(",")
+        avola.each_with_index do |a,i|
+          a.value = ajva[i].to_f
+        end
+
+
+        ac = data['actual_current'].to_s
+        acur.value = ac
+        aca = ac[1..-2].split(",")
+        acura.each_with_index do |a,i|
+          a.value = aca[i].to_f
+        end
+
 
         #TCP object
         #Actual TCP Pose
