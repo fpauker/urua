@@ -9,11 +9,20 @@ Daemonite.new do
   server = OPCUA::Server.new
   server.add_namespace "https://centurio.work/ur10evva"
 
+  pr = server.types.add_object_type(:RobotProgram).tap{|p|
+    p.add_variable :CurrentProgram
+    p.add_variable :ProgramState
+    p.add_method :LoadProgram, program: OPCUA::TYPES::STRING do |node, program|
+      # do something
+    end
+  }
+
   st = server.types.add_object_type(:States).tap{ |s|
     s.add_variable :RobotMode
     s.add_variable :JointMode
     s.add_variable :SafetyMode
     s.add_variable :ToolMode
+    s.add_variable :ProgramState
   }
 
   tcp = server.types.add_object_type(:TCP).tap{ |t|
@@ -111,6 +120,7 @@ Daemonite.new do
   sm = st.find(:SafetyMode)
   jm = st.find(:JointMode)
   tm = st.find(:ToolMode)
+  ps = st.find(:ProgramState)
 
   #Axes
   axes = robot.manifest(:Axes, ax)
@@ -180,13 +190,13 @@ Daemonite.new do
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
         tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
-
+        ps.value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
         #Axes object
         aq = data['actual_q'].to_s
         aap.value = aq
         aqa = aq[1..-2].split(",")
         aapa.each_with_index do |a,i|
-          a.value = aqa[i].to_f  
+          a.value = aqa[i].to_f
         end
 
 
