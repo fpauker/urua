@@ -12,13 +12,25 @@ Daemonite.new do
   pr = server.types.add_object_type(:RobotProgram).tap{|p|
     p.add_variable :CurrentProgram
     p.add_variable :ProgramState
-    p.add_method :LoadProgram, program: OPCUA::TYPES::STRING do |node, program|
+
+
+    p.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
+      # do something
+    end
+    p.add_method :StartProgram, program: OPCUA::TYPES::STRING do |node, program|
+      # do something
+    end
+    p.add_method :StopProgram, program: OPCUA::TYPES::STRING do |node, program|
+      # do something
+    end
+    p.add_method :PauseProgram, program: OPCUA::TYPES::STRING do |node, program|
       # do something
     end
   }
 
   st = server.types.add_object_type(:States).tap{ |s|
     s.add_variable :RobotMode
+    s.add_variable :RobotState
     s.add_variable :JointMode
     s.add_variable :SafetyMode
     s.add_variable :ToolMode
@@ -114,13 +126,20 @@ Daemonite.new do
   jv = robot.find(:JointVoltage)
   ov = robot.find(:Override)
   ss = robot.find(:SpeedScaling)
-  #State
+
+  #ProgramObject
+  prog = robot.manifest(:Program, pr)
+  cp = prog.find(:CurrentProgram)
+
+
+  #StateObject
   st = robot.manifest(:States, st)
   rm = st.find(:RobotMode)
   sm = st.find(:SafetyMode)
   jm = st.find(:JointMode)
   tm = st.find(:ToolMode)
   ps = st.find(:ProgramState)
+  rs = st.find(:RobotState)
 
   #Axes
   axes = robot.manifest(:Axes, ax)
@@ -160,7 +179,7 @@ Daemonite.new do
   speed_names, speed_types = conf.get_recipe('speed')
   speed = rtde.send_input_setup(speed_names, speed_types)
   speed["speed_slider_mask"] = 1
-  ov.value = 0
+  ov.value = 100
   ov.value = speed["speed_slider_fraction"]
 
 
@@ -170,6 +189,14 @@ Daemonite.new do
   end
   if not rtde.send_start
     puts 'Unable to start synchronization'
+  end
+
+  Thread.new do
+    while true
+      cp.value = dash.get_loaded_program
+      rs.value = dash.get_program_state
+      sleep 1
+    end
   end
 
   run do
@@ -185,12 +212,19 @@ Daemonite.new do
         jv.value = data['actual_joint_voltage']
         ss.value = data['speed_scaling']
 
+        #Program object
+
+
+
         #State objects
         rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
         tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
         ps.value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
+
+
+
         #Axes object
         aq = data['actual_q'].to_s
         aap.value = aq
@@ -233,6 +267,10 @@ Daemonite.new do
       puts e.message
     end
   end
+  on exit do
+    #reserved for important stuff
+  end
+
 end.loop!
 
 #   run do
