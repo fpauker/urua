@@ -16,16 +16,16 @@ Daemonite.new do
 
     p.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
       # do something
-
+      p 'selected' if @dashcon.load_program(program)
     end
     p.add_method :StartProgram do
-      dash.start_program
+      @dashcon.start_program
     end
     p.add_method :StopProgram do
-      dash.stop_program
+      @dashcon.stop_program
     end
     p.add_method :PauseProgram do
-      dash.pause_program
+      @dashcon.pause_program
     end
   }
 
@@ -120,9 +120,15 @@ Daemonite.new do
     #r.add_object :Target, tt, OPCUA::MANDATORY
     #r.add_object :Actual, at, OPCUA::MANDATORY
 
-    r.add_method :testMethod, test1: OPCUA::TYPES::STRING, test2: OPCUA::TYPES::DATETIME do |node, test1, test2|
-      puts 'me'
-      puts 'test'
+    r.add_method :PowerOn do
+      return nil if @dashcon.power_on
+      p 'poweron'
+      while @robmode.to_s != 'Idle'
+        return nil if @dahscon.break_release
+      end
+    end
+    r.add_method :PowerOff do
+      return nil if @dashcon.power_off
       # do something
     end
   }
@@ -138,10 +144,11 @@ Daemonite.new do
   ov = robot.find(:Override)
   ss = robot.find(:SpeedScaling)
 
+
   #ProgramObject
   prog = robot.manifest(:Program, pr)
   cp = prog.find(:CurrentProgram)
-
+  ps2 = prog.find(:ProgramState)
 
   #StateObject
   st = robot.manifest(:States, st)
@@ -195,6 +202,7 @@ Daemonite.new do
   # dash = UR::Dash.new('192.168.56.10').connect
   # rtde = UR::Rtde.new('192.168.56.101').connect
   dash = UR::Dash.new('localhost').connect
+  @dashcon = dash
   rtde = UR::Rtde.new('localhost').connect
 
   return if !dash || !rtde
@@ -219,6 +227,7 @@ Daemonite.new do
     while true
       cp.value = dash.get_loaded_program
       rs.value = dash.get_program_state
+      ps2 = rs
       sleep 1
     end
   end
@@ -241,6 +250,7 @@ Daemonite.new do
 
         #State objects
         rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
+        @robmode = rm
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
         tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
