@@ -9,6 +9,10 @@ Daemonite.new do
   server = OPCUA::Server.new
   server.add_namespace "https://centurio.work/ur10evva"
 
+  dash = nil
+  rtde = nil
+
+
   pr = server.types.add_object_type(:RobotProgram).tap{|p|
     p.add_variable :CurrentProgram
     p.add_variable :ProgramState
@@ -19,13 +23,13 @@ Daemonite.new do
       p 'selected' if @dashcon.load_program(program)
     end
     p.add_method :StartProgram do
-      @dashcon.start_program
+      dash.start_program
     end
     p.add_method :StopProgram do
-      @dashcon.stop_program
+      dash.stop_program
     end
     p.add_method :PauseProgram do
-      @dashcon.pause_program
+      dash.pause_program
     end
   }
 
@@ -202,7 +206,6 @@ Daemonite.new do
   # dash = UR::Dash.new('192.168.56.10').connect
   # rtde = UR::Rtde.new('192.168.56.101').connect
   dash = UR::Dash.new('localhost').connect
-  @dashcon = dash
   rtde = UR::Rtde.new('localhost').connect
 
   return if !dash || !rtde
