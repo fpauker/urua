@@ -3,27 +3,53 @@
 require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
 #require 'ur-sock'
+require 'net/ssh'
 
 Daemonite.new do
 
   server = OPCUA::Server.new
   server.add_namespace "https://centurio.work/ur10evva"
-
+  ipadress = '192.168.56.101'
+  #ipadress = 'localhost'
   dash = nil
   rtde = nil
+  programs = nil
+
+
+
+  pf = server.types.add_object_type(:ProgramFile).tap{|p|
+
+    p.add_method :SelectProgram do |node|
+      a = node.id.to_s.split('/')
+      dash.load_program(a[a.size-2].to_s[0..-5])
+    end
+    p.add_method :StartProgram do
+      dash.start_program
+    end
+    p.add_method :StopProgram do
+      dash.stop_program
+    end
+    p.add_method :PauseProgram do
+      dash.pause_program
+    end
+  }
 
 
   pr = server.types.add_object_type(:RobotProgram).tap{|p|
     p.add_variable :CurrentProgram
     p.add_variable :ProgramState
 
-
+    p.add_object(:Programs, server.types.folder).tap{ |p|
+      p.add_object :Program, pf, OPCUA::OPTIONAL
+    }
     p.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
       # do something
-      p 'selected' if @dashcon.load_program(program)
+      p 'selected' if dash.load_program(program)
     end
     p.add_method :StartProgram do
-      dash.start_program
+      if !dash.start_program
+        nil
+      end
     end
     p.add_method :StopProgram do
       dash.stop_program
@@ -125,14 +151,24 @@ Daemonite.new do
     #r.add_object :Actual, at, OPCUA::MANDATORY
 
     r.add_method :PowerOn do
-      return nil if @dashcon.power_on
-      p 'poweron'
-      while @robmode.to_s != 'Idle'
-        return nil if @dahscon.break_release
+
+      Thread.new do
+        if dash.power_on
+          p 'poweron'
+        end
+        while @robmode.to_s != 'Idle'
+          p @robmode
+          sleep 0.5
+        end
+        p 'break released' if dash.break_release
+
       end
+
     end
     r.add_method :PowerOff do
-      return nil if @dashcon.power_off
+      if dash.power_off
+        p 'poweroff'
+      end
       # do something
     end
   }
@@ -203,10 +239,18 @@ Daemonite.new do
   output_names, output_types = conf.get_recipe('out')
 
   #Connecting to universal robot
-  # dash = UR::Dash.new('192.168.56.10').connect
-  # rtde = UR::Rtde.new('192.168.56.101').connect
-  dash = UR::Dash.new('localhost').connect
-  rtde = UR::Rtde.new('localhost').connect
+  dash = UR::Dash.new(ipadress).connect
+  rtde = UR::Rtde.new(ipadress).connect
+
+  #parsing file system
+  ssh = Net::SSH.start( ipadress, 'ur', password: "easybot" )
+  programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10 | grep .urp' ).split( "\n" )
+  ssh.close()
+  pff = prog.find(:Programs)
+  programs.each do |n|
+    pff.manifest(n[0..-1],pf)
+  end
+
 
   return if !dash || !rtde
 
@@ -253,7 +297,7 @@ Daemonite.new do
 
         #State objects
         rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
-        @robmode = rm
+        @robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
         tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
@@ -330,11 +374,3 @@ Daemonite.new do
   end
 
 end.loop!
-
-#   run do
-#     #sleep server.run
-#     data = rtde.receive
-#     tjp.value = rtde["JointPositions"]
-#     #tn.value = Time.now
-#   end
-# end.loop!
