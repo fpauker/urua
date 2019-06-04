@@ -16,7 +16,7 @@ Daemonite.new do
   programs = nil
 
 
-
+  #ProgramFile
   pf = server.types.add_object_type(:ProgramFile).tap{|p|
 
     p.add_method :SelectProgram do |node|
@@ -33,8 +33,7 @@ Daemonite.new do
       dash.pause_program
     end
   }
-
-
+  #RobotProgram
   pr = server.types.add_object_type(:RobotProgram).tap{|p|
     p.add_variable :CurrentProgram
     p.add_variable :ProgramState
@@ -58,7 +57,6 @@ Daemonite.new do
       dash.pause_program
     end
   }
-
   #StateObjectType
   st = server.types.add_object_type(:States).tap{ |s|
     s.add_variable :RobotMode
@@ -69,7 +67,7 @@ Daemonite.new do
     s.add_variable :ProgramState
   }
   #TCP ObjectType
-  tcp = server.types.add_object_type(:TCP).tap{ |t|
+  tcp = server.types.add_object_type(:Tcp).tap{ |t|
     t.add_object(:ActualPose, server.types.folder).tap{ |p|
       p.add_variable :TCPPose
       p.add_variable :Axis1
@@ -137,21 +135,24 @@ Daemonite.new do
       v.add_variable :Axis5
       v.add_variable :Axis6
     }
+    a.add_object(:ActualMomentum, server.types.folder).tap{ |v|
+      v.add_variable :AxisMomentum
+    }
   }
+
   #RobotObjectType
   rt = server.types.add_object_type(:RobotType).tap{ |r|
     r.add_variable :ManufacturerName
-    r.add_variable :MainVoltage
-    r.add_variable :RobotVoltage
-    r.add_variable :RobotCurrent
-    r.add_variable :JointVoltage
     r.add_variable_rw :Override
     r.add_variable :SpeedScaling
     #r.add_object :Target, tt, OPCUA::MANDATORY
     #r.add_object :Actual, at, OPCUA::MANDATORY
-
+    r.add_object(:SafetyBoard, server.types.folder).tap{ |r|
+      r.add_variable :MainVoltage
+      r.add_variable :RobotVoltage
+      r.add_variable :RobotCurrent
+    }
     r.add_method :PowerOn do
-
       Thread.new do
         if dash.power_on
           p 'poweron'
@@ -163,7 +164,6 @@ Daemonite.new do
         p 'break released' if dash.break_release
 
       end
-
     end
     r.add_method :PowerOff do
       if dash.power_off
@@ -171,18 +171,29 @@ Daemonite.new do
       end
       # do something
     end
+    r.add_object(:OperationMode, server.types.folder).tap{ |r|
+      r.add_method :AutomaticMode do
+        dash.set_operation_mode_auto
+      end
+      r.add_method :ClearOperationMode do
+        dash.clear_operation_mode
+      end
+    }
   }
 
   #populating the adress space
   robot = server.objects.manifest(:UR10e, rt)
   #Robot object
   robot.find(:ManufacturerName).value = 'Universal Robot'
-  mv = robot.find(:MainVoltage)
-  rv = robot.find(:RobotVoltage)
-  rc = robot.find(:RobotCurrent)
-  jv = robot.find(:JointVoltage)
   ov = robot.find(:Override)
   ss = robot.find(:SpeedScaling)
+
+
+  #SafetyBoard
+  sb = robot.find(:SafetyBoard)
+  mv = sb.find(:MainVoltage)
+  rv = sb.find(:RobotVoltage)
+  rc = sb.find(:RobotCurrent)
 
 
   #ProgramObject
@@ -217,10 +228,14 @@ Daemonite.new do
   avolf = axes.find(:ActualVoltage)
   avol = avolf.find(:AxisVoltage)
   avola = [avolf.find(:Axis1),avolf.find(:Axis2),avolf.find(:Axis3),avolf.find(:Axis4),avolf.find(:Axis5),avolf.find(:Axis6)]
+  #Momentum
+  amomf = axes.find(:ActualMomentum)
+  amom = amomf.find(:AxisMomentum)
+
 
   #TCP
   #TCP Pose
-  tcp = robot.manifest(:TCP, tcp)
+  tcp = robot.manifest(:Tcp, tcp)
   apf = tcp.find(:ActualPose)
   ap = apf.find(:TCPPose)
   apa = [apf.find(:Axis1),apf.find(:Axis2),apf.find(:Axis3),apf.find(:Axis4),apf.find(:Axis5),apf.find(:Axis6)]
@@ -286,54 +301,50 @@ Daemonite.new do
       data = rtde.receive
       if data
         #robot object
-
-
         mv.value = data['actual_main_voltage']
         rv.value = data['actual_robot_voltage']
         rc.value = data['actual_robot_current']
-        jv.value = data['actual_joint_voltage']
         ss.value = data['speed_scaling']
-
 
         #State objects
         rm.value = UR::Rtde::ROBOTMODE[data['robot_mode']]
         @robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
         sm.value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         jm.value = UR::Rtde::JOINTMODE[data['joint_mode']]
-        tm.value = UR::Rtde::JOINTMODE[data['tool_mode']]
+        tm.value = UR::Rtde::TOOLMODE[data['tool_mode']]
         ps.value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
 
-
-
         #Axes object
+        #actual jont positions
         aq = data['actual_q'].to_s
         aap.value = aq
         aqa = aq[1..-2].split(",")
         aapa.each_with_index do |a,i|
           a.value = aqa[i].to_f
         end
-
+        #actual joint velocities
         aqd = data['actual_qd'].to_s
         avel.value = aqd
         aqda = aqd[1..-2].split(",")
         avela.each_with_index do |a,i|
           a.value = aqda[i].to_f
         end
-
+        #actual joint voltage
         ajv = data['actual_joint_voltage'].to_s
         avol.value = ajv
         ajva = ajv[1..-2].split(",")
         avola.each_with_index do |a,i|
           a.value = ajva[i].to_f
         end
-
-
+        #actual current
         ac = data['actual_current'].to_s
         acur.value = ac
         aca = ac[1..-2].split(",")
         acura.each_with_index do |a,i|
           a.value = aca[i].to_f
         end
+        #actual_momentum
+        amom.value = data['actual_momentum'].to_s
 
 
         #TCP object
