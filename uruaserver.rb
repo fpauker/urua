@@ -287,7 +287,7 @@ Daemonite.new do
   end
 
   Thread.new do
-    while true
+    while dash != nil
       cp.value = dash.get_loaded_program
       rs.value = dash.get_program_state
       sleep 1
@@ -374,12 +374,16 @@ Daemonite.new do
         speed["speed_slider_fraction"] = ov.value[0]/100
         rtde.send(speed)
       end
+
+    rescue Errno::ECONNREFUSED => e
+      puts 't'
     rescue => e
       puts e.message
     end
   end
   on exit do
     #reserved for important stuff
+    p 'bye'
   end
 
 end.loop!
