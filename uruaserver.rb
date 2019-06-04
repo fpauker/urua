@@ -181,7 +181,7 @@ Daemonite.new do
         dash.close_popupmessage
       end
       r.add_method :AddToLog, message: OPCUA::TYPES::STRING do |node, message|
-        dash.add_to_log
+        dash.add_to_log(message)
       end
       r.add_method :CloseSafetyPopup do
         dash.close_safety_popup
