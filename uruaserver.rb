@@ -33,39 +33,6 @@ Daemonite.new do
       dash.pause_program
     end
   }
-  #RobotProgram
-  pr = server.types.add_object_type(:RobotProgram).tap{|p|
-    p.add_variable :CurrentProgram
-    p.add_variable :ProgramState
-
-    p.add_object(:Programs, server.types.folder).tap{ |p|
-      p.add_object :Program, pf, OPCUA::OPTIONAL
-    }
-    p.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
-      # do something
-      p 'selected' if dash.load_program(program)
-    end
-    p.add_method :StartProgram do
-      if !dash.start_program
-        nil
-      end
-    end
-    p.add_method :StopProgram do
-      dash.stop_program
-    end
-    p.add_method :PauseProgram do
-      dash.pause_program
-    end
-  }
-  #StateObjectType
-  st = server.types.add_object_type(:States).tap{ |s|
-    s.add_variable :RobotMode
-    s.add_variable :RobotState
-    s.add_variable :JointMode
-    s.add_variable :SafetyMode
-    s.add_variable :ToolMode
-    s.add_variable :ProgramState
-  }
   #TCP ObjectType
   tcp = server.types.add_object_type(:Tcp).tap{ |t|
     t.add_object(:ActualPose, server.types.folder).tap{ |p|
@@ -142,73 +109,107 @@ Daemonite.new do
 
   #RobotObjectType
   rt = server.types.add_object_type(:RobotType).tap{ |r|
-    r.add_variable :ManufacturerName
-    r.add_variable_rw :Override
-    r.add_variable :SpeedScaling
-    #r.add_object :Target, tt, OPCUA::MANDATORY
-    #r.add_object :Actual, at, OPCUA::MANDATORY
+
+    r.add_object(:State, server.types.folder).tap{ |s|
+      s.add_variable :CurrentProgram
+      s.add_variable :RobotMode
+      s.add_variable :RobotState
+      s.add_variable :JointMode
+      s.add_variable :SafetyMode
+      s.add_variable :ToolMode
+      s.add_variable :ProgramState
+      s.add_variable_rw :Override
+      s.add_variable :SpeedScaling
+    }
     r.add_object(:SafetyBoard, server.types.folder).tap{ |r|
       r.add_variable :MainVoltage
       r.add_variable :RobotVoltage
       r.add_variable :RobotCurrent
     }
+    r.add_object(:Programs, server.types.folder).tap{ |p|
+      p.add_object :Program, pf, OPCUA::OPTIONAL
+    }
+    r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
+      # do something
+      p 'selected' if dash.load_program(program)
+    end
+    r.add_method :StartProgram do
+      if !dash.start_program
+        nil
+      end
+    end
+    r.add_method :StopProgram do
+      dash.stop_program
+    end
+    r.add_method :PauseProgram do
+      dash.pause_program
+    end
     r.add_method :PowerOn do
-      Thread.new do
-        if dash.power_on
-          p 'poweron'
+      if @robmode != "Running"
+        Thread.new do
+          if dash.power_on
+            p 'poweron'
+          end
+          while @robmode.to_s != 'Idle'
+            p @robmode
+            sleep 0.5
+          end
+          p 'break released' if dash.break_release
         end
-        while @robmode.to_s != 'Idle'
-          p @robmode
-          sleep 0.5
-        end
-        p 'break released' if dash.break_release
-
       end
     end
     r.add_method :PowerOff do
-      if dash.power_off
-        p 'poweroff'
-      end
-      # do something
+      dash.power_off
     end
-    r.add_object(:OperationMode, server.types.folder).tap{ |r|
+    r.add_object(:RobotMode, server.types.folder).tap{ |r|
       r.add_method :AutomaticMode do
         dash.set_operation_mode_auto
       end
-      r.add_method :ClearOperationMode do
+      r.add_method :ManualMode do
+        dash.set_operation_mode_manual
+      end
+      r.add_method :ClearMode do
         dash.clear_operation_mode
       end
+    }
+
+    r.add_object(:Messaging, server.types.folder).tap{ |r|
+      r.add_method :PopupMessage, message: OPCUA::TYPES::STRING do |node, message|
+        dash.open_popupmessage(message)
+      end
+      r.add_method :ClosePopupMessage do
+        dash.close_popupmessage
+      end
+      r.add_method :AddToLog, message: OPCUA::TYPES::STRING do |node, message|
+        dash.add_to_log
+      end
+      r.add_method :CloseSafetyPopup do
+        dash.close_safety_popup
+      end
+
+
     }
   }
 
   #populating the adress space
-  robot = server.objects.manifest(:UR10e, rt)
   #Robot object
-  robot.find(:ManufacturerName).value = 'Universal Robot'
-  ov = robot.find(:Override)
-  ss = robot.find(:SpeedScaling)
-
-
+  robot = server.objects.manifest(:UR10e, rt)
   #SafetyBoard
   sb = robot.find(:SafetyBoard)
   mv = sb.find(:MainVoltage)
   rv = sb.find(:RobotVoltage)
   rc = sb.find(:RobotCurrent)
-
-
-  #ProgramObject
-  prog = robot.manifest(:Program, pr)
-  cp = prog.find(:CurrentProgram)
-  ps2 = prog.find(:ProgramState)
-
   #StateObject
-  st = robot.manifest(:States, st)
+  st = robot.find(:State)
   rm = st.find(:RobotMode)
   sm = st.find(:SafetyMode)
   jm = st.find(:JointMode)
   tm = st.find(:ToolMode)
   ps = st.find(:ProgramState)
   rs = st.find(:RobotState)
+  cp = st.find(:CurrentProgram)
+  ov = st.find(:Override)
+  ss = st.find(:SpeedScaling)
 
   #Axes
   axes = robot.manifest(:Axes, ax)
@@ -261,7 +262,7 @@ Daemonite.new do
   ssh = Net::SSH.start( ipadress, 'ur', password: "easybot" )
   programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10 | grep .urp' ).split( "\n" )
   ssh.close()
-  pff = prog.find(:Programs)
+  pff = robot.find(:Programs)
   programs.each do |n|
     pff.manifest(n[0..-1],pf)
   end
@@ -289,7 +290,6 @@ Daemonite.new do
     while true
       cp.value = dash.get_loaded_program
       rs.value = dash.get_program_state
-      ps2 = rs
       sleep 1
     end
   end
@@ -370,10 +370,8 @@ Daemonite.new do
           a.value = atfa[i].to_f
         end
 
-
-
         #write values
-        speed["speed_slider_fraction"] = ov.value
+        speed["speed_slider_fraction"] = ov.value[0]/100
         rtde.send(speed)
       end
     rescue => e
