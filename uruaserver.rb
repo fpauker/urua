@@ -5,6 +5,10 @@ require_relative '../ur-sock/lib/ur-sock'
 #require 'ur-sock'
 require 'net/ssh'
 
+def add_axis_concept(context,item)
+  context.add_variables item, :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+end
+
 Daemonite.new do
 
   server = OPCUA::Server.new
@@ -35,96 +39,28 @@ Daemonite.new do
   }
   #TCP ObjectType
   tcp = server.types.add_object_type(:Tcp).tap{ |t|
-    t.add_object(:ActualPose, server.types.folder).tap{ |p|
-      p.add_variable :TCPPose
-      p.add_variable :Axis1
-      p.add_variable :Axis2
-      p.add_variable :Axis3
-      p.add_variable :Axis4
-      p.add_variable :Axis5
-      p.add_variable :Axis6
-    }
-    t.add_object(:ActualSpeed, server.types.folder).tap{ |s|
-      s.add_variable :TCPSpeed
-      s.add_variable :Axis1
-      s.add_variable :Axis2
-      s.add_variable :Axis3
-      s.add_variable :Axis4
-      s.add_variable :Axis5
-      s.add_variable :Axis6
-    }
-    t.add_object(:ActualForce, server.types.folder).tap{ |f|
-      f.add_variable :TCPForce
-      f.add_variable :Axis1
-      f.add_variable :Axis2
-      f.add_variable :Axis3
-      f.add_variable :Axis4
-      f.add_variable :Axis5
-      f.add_variable :Axis6
-    }
+    t.add_object(:ActualPose, server.types.folder).tap { |p| add_axis_concept p, :TCPPose }
+    t.add_object(:ActualSpeed, server.types.folder).tap{ |p| add_axis_concept p, :TCPSpeed }
+    t.add_object(:ActualForce, server.types.folder).tap{ |p| add_axis_concept p, :TCPForce }
 
   }
   #AxisObjectType
   ax = server.types.add_object_type(:AxisType).tap{|a|
-    a.add_object(:ActualPositions, server.types.folder).tap{ |p|
-      p.add_variable :AxisPositions
-      p.add_variable :Axis1
-      p.add_variable :Axis2
-      p.add_variable :Axis3
-      p.add_variable :Axis4
-      p.add_variable :Axis5
-      p.add_variable :Axis6
-    }
-    a.add_object(:ActualVelocities, server.types.folder).tap{ |v|
-      v.add_variable :AxisVelocities
-      v.add_variable :Axis1
-      v.add_variable :Axis2
-      v.add_variable :Axis3
-      v.add_variable :Axis4
-      v.add_variable :Axis5
-      v.add_variable :Axis6
-    }
-    a.add_object(:ActualCurrents, server.types.folder).tap{ |c|
-      c.add_variable :AxisCurrents
-      c.add_variable :Axis1
-      c.add_variable :Axis2
-      c.add_variable :Axis3
-      c.add_variable :Axis4
-      c.add_variable :Axis5
-      c.add_variable :Axis6
-    }
-    a.add_object(:ActualVoltage, server.types.folder).tap{ |v|
-      v.add_variable :AxisVoltage
-      v.add_variable :Axis1
-      v.add_variable :Axis2
-      v.add_variable :Axis3
-      v.add_variable :Axis4
-      v.add_variable :Axis5
-      v.add_variable :Axis6
-    }
-    a.add_object(:ActualMomentum, server.types.folder).tap{ |v|
-      v.add_variable :AxisMomentum
-    }
+    a.add_object(:ActualPositions, server.types.folder).tap { |p| add_axis_concept p, :AxisPositions }
+    a.add_object(:ActualVelocities, server.types.folder).tap{ |p| add_axis_concept p, :AxisVelocities }
+    a.add_object(:ActualCurrents, server.types.folder).tap  { |p| add_axis_concept p, :AxisCurrents }
+    a.add_object(:ActualVoltage, server.types.folder).tap   { |p| add_axis_concept p, :AxisVoltage }
+    a.add_object(:ActualMomentum, server.types.folder).tap  { |p| p.add_variable :AxisMomentum }
   }
 
   #RobotObjectType
   rt = server.types.add_object_type(:RobotType).tap{ |r|
-
     r.add_object(:State, server.types.folder).tap{ |s|
-      s.add_variable :CurrentProgram
-      s.add_variable :RobotMode
-      s.add_variable :RobotState
-      s.add_variable :JointMode
-      s.add_variable :SafetyMode
-      s.add_variable :ToolMode
-      s.add_variable :ProgramState
+      s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling
       s.add_variable_rw :Override
-      s.add_variable :SpeedScaling
     }
     r.add_object(:SafetyBoard, server.types.folder).tap{ |r|
-      r.add_variable :MainVoltage
-      r.add_variable :RobotVoltage
-      r.add_variable :RobotCurrent
+      r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
     }
     r.add_object(:Programs, server.types.folder).tap{ |p|
       p.add_object :Program, pf, OPCUA::OPTIONAL
@@ -134,9 +70,7 @@ Daemonite.new do
       p 'selected' if dash.load_program(program)
     end
     r.add_method :StartProgram do
-      if !dash.start_program
-        nil
-      end
+      nil unless dash.start_program
     end
     r.add_method :StopProgram do
       dash.stop_program
@@ -186,20 +120,20 @@ Daemonite.new do
       r.add_method :CloseSafetyPopup do
         dash.close_safety_popup
       end
-
-
     }
   }
 
-  #populating the adress space
-  #Robot object
+  ### populating the adress space
+  ### Robot object
   robot = server.objects.manifest(:UR10e, rt)
-  #SafetyBoard
+
+  ### SafetyBoard
   sb = robot.find(:SafetyBoard)
   mv = sb.find(:MainVoltage)
   rv = sb.find(:RobotVoltage)
   rc = sb.find(:RobotCurrent)
-  #StateObject
+
+  ### StateObject
   st = robot.find(:State)
   rm = st.find(:RobotMode)
   sm = st.find(:SafetyMode)
@@ -211,43 +145,39 @@ Daemonite.new do
   ov = st.find(:Override)
   ss = st.find(:SpeedScaling)
 
-  #Axes
+  ### Axes
   axes = robot.manifest(:Axes, ax)
+  aapf, avelf, acurf, avolf, amomf = axes.find :ActualPositions, :ActualVelocities, :ActualCurrents, :ActualVoltage, :ActualMomentum
+
   #Positions
-  aapf = axes.find(:ActualPositions)
-  aap = aapf.find(:AxisPositions)
-  aapa = [aapf.find(:Axis1),aapf.find(:Axis2),aapf.find(:Axis3),aapf.find(:Axis4),aapf.find(:Axis5),aapf.find(:Axis6)]
+  aap  = aapf.find :AxisPositions
+  aapa = aapf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Velocities
-  avelf = axes.find(:ActualVelocities)
-  avel = avelf.find(:AxisVelocities)
-  avela = [avelf.find(:Axis1),avelf.find(:Axis2),avelf.find(:Axis3),avelf.find(:Axis4),avelf.find(:Axis5),avelf.find(:Axis6)]
+  avel  = avelf.find :AxisVelocities
+  avela = avelf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Currents
-  acurf = axes.find(:ActualCurrents)
-  acur = acurf.find(:AxisCurrents)
-  acura = [acurf.find(:Axis1),acurf.find(:Axis2),acurf.find(:Axis3),acurf.find(:Axis4),acurf.find(:Axis5),acurf.find(:Axis6)]
+  acur  = acurf.find :AxisCurrents
+  acura = acurf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Voltage
-  avolf = axes.find(:ActualVoltage)
-  avol = avolf.find(:AxisVoltage)
-  avola = [avolf.find(:Axis1),avolf.find(:Axis2),avolf.find(:Axis3),avolf.find(:Axis4),avolf.find(:Axis5),avolf.find(:Axis6)]
+  avol  = avolf.find :AxisVoltage
+  avola = avolf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Momentum
-  amomf = axes.find(:ActualMomentum)
-  amom = amomf.find(:AxisMomentum)
+  amom = amomf.find :AxisMomentum
 
 
-  #TCP
-  #TCP Pose
+  ### TCP
   tcp = robot.manifest(:Tcp, tcp)
-  apf = tcp.find(:ActualPose)
-  ap = apf.find(:TCPPose)
-  apa = [apf.find(:Axis1),apf.find(:Axis2),apf.find(:Axis3),apf.find(:Axis4),apf.find(:Axis5),apf.find(:Axis6)]
-  #TCP Speed
-  asf = tcp.find(:ActualSpeed)
-  as = asf.find(:TCPSpeed)
-  asa = [asf.find(:Axis1),asf.find(:Axis2),asf.find(:Axis3),asf.find(:Axis4),asf.find(:Axis5),asf.find(:Axis6)]
-  #TCP Force
-  aff = tcp.find(:ActualForce)
-  af = aff.find(:TCPForce)
-  afa = [aff.find(:Axis1),aff.find(:Axis2),aff.find(:Axis3),aff.find(:Axis4),aff.find(:Axis5),aff.find(:Axis6)]
+  apf, asf, aff = tcp.find :ActualPose, :ActualSpeed, :ActualForce
+
+  ### TCP Pose
+  ap  = apf.find :TCPPose
+  apa = apf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  ### TCP Speed
+  as  = asf.find :TCPSpeed
+  asa = asf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  ### TCP Force
+  af  = aff.find :TCPForce
+  afa = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
 
   #loading config file
@@ -267,8 +197,7 @@ Daemonite.new do
     pff.manifest(n[0..-1],pf)
   end
 
-
-  return if !dash || !rtde
+  return if !dash || !rtde ##### TODO, don't return, raise
 
   ## Set Speed to very slow
   speed_names, speed_types = conf.get_recipe('speed')
