@@ -22,7 +22,6 @@ Daemonite.new do
 
   #ProgramFile
   pf = server.types.add_object_type(:ProgramFile).tap{|p|
-
     p.add_method :SelectProgram do |node|
       a = node.id.to_s.split('/')
       dash.load_program(a[a.size-2].to_s[0..-5])
@@ -42,7 +41,6 @@ Daemonite.new do
     t.add_object(:ActualPose, server.types.folder).tap { |p| add_axis_concept p, :TCPPose }
     t.add_object(:ActualSpeed, server.types.folder).tap{ |p| add_axis_concept p, :TCPSpeed }
     t.add_object(:ActualForce, server.types.folder).tap{ |p| add_axis_concept p, :TCPForce }
-
   }
   #AxisObjectType
   ax = server.types.add_object_type(:AxisType).tap{|a|
