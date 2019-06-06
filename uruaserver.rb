@@ -19,121 +19,121 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
-Daemonite.new do
+Daemonite.new do |opts|
 
-  server = OPCUA::Server.new
-  server.add_namespace "https://centurio.work/ur10evva"
-  ipadress = '192.168.56.101'
+  opts['server'] = OPCUA::Server.new
+  opts['server'].add_namespace "https://centurio.work/ur10evva"
+  opts['ipadress'] = '192.168.56.101'
   #ipadress = 'localhost'
-  dash = nil
-  rtde = nil
-  programs = nil
+  opts['dash'] = nil
+  opts['rtde'] = nil
+  opts['programs'] = nil
 
 
   #ProgramFile
-  pf = server.types.add_object_type(:ProgramFile).tap{|p|
+  pf = opts['server'].types.add_object_type(:ProgramFile).tap{|p|
     p.add_method :SelectProgram do |node|
       a = node.id.to_s.split('/')
-      dash.load_program(a[a.size-2].to_s[0..-5])
+      opts['dash'].load_program(a[a.size-2].to_s[0..-5])
     end
     p.add_method :StartProgram do
-      dash.start_program
+      opts['dash'].start_program
     end
     p.add_method :StopProgram do
-      dash.stop_program
+      opts['dash'].stop_program
     end
     p.add_method :PauseProgram do
-      dash.pause_program
+      opts['dash'].pause_program
     end
   }
   #TCP ObjectType
-  tcp = server.types.add_object_type(:Tcp).tap{ |t|
-    t.add_object(:ActualPose, server.types.folder).tap { |p| add_axis_concept p, :TCPPose }
-    t.add_object(:ActualSpeed, server.types.folder).tap{ |p| add_axis_concept p, :TCPSpeed }
-    t.add_object(:ActualForce, server.types.folder).tap{ |p| add_axis_concept p, :TCPForce }
+  tcp = opts['server'].types.add_object_type(:Tcp).tap{ |t|
+    t.add_object(:ActualPose, opts['server'].types.folder).tap { |p| add_axis_concept p, :TCPPose }
+    t.add_object(:ActualSpeed, opts['server'].types.folder).tap{ |p| add_axis_concept p, :TCPSpeed }
+    t.add_object(:ActualForce, opts['server'].types.folder).tap{ |p| add_axis_concept p, :TCPForce }
   }
   #AxisObjectType
-  ax = server.types.add_object_type(:AxisType).tap{|a|
-    a.add_object(:ActualPositions, server.types.folder).tap { |p| add_axis_concept p, :AxisPositions }
-    a.add_object(:ActualVelocities, server.types.folder).tap{ |p| add_axis_concept p, :AxisVelocities }
-    a.add_object(:ActualCurrents, server.types.folder).tap  { |p| add_axis_concept p, :AxisCurrents }
-    a.add_object(:ActualVoltage, server.types.folder).tap   { |p| add_axis_concept p, :AxisVoltage }
-    a.add_object(:ActualMomentum, server.types.folder).tap  { |p| p.add_variable :AxisMomentum }
+  ax = opts['server'].types.add_object_type(:AxisType).tap{|a|
+    a.add_object(:ActualPositions, opts['server'].types.folder).tap { |p| add_axis_concept p, :AxisPositions }
+    a.add_object(:ActualVelocities, opts['server'].types.folder).tap{ |p| add_axis_concept p, :AxisVelocities }
+    a.add_object(:ActualCurrents, opts['server'].types.folder).tap  { |p| add_axis_concept p, :AxisCurrents }
+    a.add_object(:ActualVoltage, opts['server'].types.folder).tap   { |p| add_axis_concept p, :AxisVoltage }
+    a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
   }
 
   #RobotObjectType
-  rt = server.types.add_object_type(:RobotType).tap{ |r|
-    r.add_object(:State, server.types.folder).tap{ |s|
+  rt = opts['server'].types.add_object_type(:RobotType).tap{ |r|
+    r.add_object(:State, opts['server'].types.folder).tap{ |s|
       s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling
       s.add_variable_rw :Override
     }
-    r.add_object(:SafetyBoard, server.types.folder).tap{ |r|
+    r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
       r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
     }
-    r.add_object(:Programs, server.types.folder).tap{ |p|
+    r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
       p.add_object :Program, pf, OPCUA::OPTIONAL
     }
     r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
       # do something
-      p 'selected' if dash.load_program(program)
+      p 'selected' if opts['dash'].load_program(program)
     end
     r.add_method :StartProgram do
-      nil unless dash.start_program
+      nil unless opts['dash'].start_program
     end
     r.add_method :StopProgram do
-      dash.stop_program
+      opts['dash'].stop_program
     end
     r.add_method :PauseProgram do
-      dash.pause_program
+      opts['dash'].pause_program
     end
     r.add_method :PowerOn do
       if @robmode != "Running"
         Thread.new do
-          if dash.power_on
+          if opts['dash'].power_on
             p 'poweron'
           end
           while @robmode.to_s != 'Idle'
             p @robmode
             sleep 0.5
           end
-          p 'break released' if dash.break_release
+          p 'break released' if opts['dash'].break_release
         end
       end
     end
     r.add_method :PowerOff do
-      dash.power_off
+      opts['dash'].power_off
     end
-    r.add_object(:RobotMode, server.types.folder).tap{ |r|
+    r.add_object(:RobotMode, opts['server'].types.folder).tap{ |r|
       r.add_method :AutomaticMode do
-        dash.set_operation_mode_auto
+        opts['dash'].set_operation_mode_auto
       end
       r.add_method :ManualMode do
-        dash.set_operation_mode_manual
+        opts['dash'].set_operation_mode_manual
       end
       r.add_method :ClearMode do
-        dash.clear_operation_mode
+        opts['dash'].clear_operation_mode
       end
     }
 
-    r.add_object(:Messaging, server.types.folder).tap{ |r|
+    r.add_object(:Messaging, opts['server'].types.folder).tap{ |r|
       r.add_method :PopupMessage, message: OPCUA::TYPES::STRING do |node, message|
-        dash.open_popupmessage(message)
+        opts['dash'].open_popupmessage(message)
       end
       r.add_method :ClosePopupMessage do
-        dash.close_popupmessage
+        opts['dash'].close_popupmessage
       end
       r.add_method :AddToLog, message: OPCUA::TYPES::STRING do |node, message|
-        dash.add_to_log(message)
+        opts['dash'].add_to_log(message)
       end
       r.add_method :CloseSafetyPopup do
-        dash.close_safety_popup
+        opts['dash'].close_safety_popup
       end
     }
   }
 
   ### populating the adress space
   ### Robot object
-  robot = server.objects.manifest(:UR10e, rt)
+  robot = opts['server'].objects.manifest(:UR10e, rt)
 
   ### SafetyBoard
   sb = robot.find(:SafetyBoard)
@@ -193,7 +193,7 @@ Daemonite.new do
   output_names, output_types = conf.get_recipe('out')
 
   #Connecting to universal robot
-  dash = UR::Dash.new(ipadress).connect
+  opts['dash'] = UR::Dash.new(ipadress).connect
   rtde = UR::Rtde.new(ipadress).connect
 
   #parsing file system
@@ -205,7 +205,7 @@ Daemonite.new do
     pff.manifest(n[0..-1],pf)
   end
 
-  return if !dash || !rtde ##### TODO, don't return, raise
+  return if !opts['dash'] || !rtde ##### TODO, don't return, raise
 
   ## Set Speed to very slow
   speed_names, speed_types = conf.get_recipe('speed')
@@ -224,9 +224,9 @@ Daemonite.new do
   end
 
   Thread.new do
-    while dash != nil
-      cp.value = dash.get_loaded_program
-      rs.value = dash.get_program_state
+    while opts['dash'] != nil
+      cp.value = opts['dash'].get_loaded_program
+      rs.value = opts['dash'].get_program_state
       sleep 1
     end
   end
@@ -234,7 +234,7 @@ Daemonite.new do
   run do
     begin
 
-      server.run
+      opts['server'].run
       data = rtde.receive
       if data
         #robot object
