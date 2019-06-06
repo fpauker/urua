@@ -137,40 +137,40 @@ Daemonite.new do |opts|
 
   ### SafetyBoard
   sb = robot.find(:SafetyBoard)
-  mv = sb.find(:MainVoltage)
-  rv = sb.find(:RobotVoltage)
-  rc = sb.find(:RobotCurrent)
+  opts['mv'] = sb.find(:MainVoltage)
+  opts['rv'] = sb.find(:RobotVoltage)
+  opts['rc'] = sb.find(:RobotCurrent)
 
   ### StateObject
   st = robot.find(:State)
-  rm = st.find(:RobotMode)
-  sm = st.find(:SafetyMode)
-  jm = st.find(:JointMode)
-  tm = st.find(:ToolMode)
-  ps = st.find(:ProgramState)
-  rs = st.find(:RobotState)
-  cp = st.find(:CurrentProgram)
-  ov = st.find(:Override)
-  ss = st.find(:SpeedScaling)
+  opts['rm'] = st.find(:RobotMode)
+  opts['sm'] = st.find(:SafetyMode)
+  opts['jm'] = st.find(:JointMode)
+  opts['tm'] = st.find(:ToolMode)
+  opts['ps'] = st.find(:ProgramState)
+  opts['rs'] = st.find(:RobotState)
+  opts['cp'] = st.find(:CurrentProgram)
+  opts['ov'] = st.find(:Override)
+  opts['ss'] = st.find(:SpeedScaling)
 
   ### Axes
   axes = robot.manifest(:Axes, ax)
   aapf, avelf, acurf, avolf, amomf = axes.find :ActualPositions, :ActualVelocities, :ActualCurrents, :ActualVoltage, :ActualMomentum
 
   #Positions
-  aap  = aapf.find :AxisPositions
-  aapa = aapf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['aap']  = aapf.find :AxisPositions
+  opts['aapa'] = aapf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Velocities
-  avel  = avelf.find :AxisVelocities
-  avela = avelf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['avel']  = avelf.find :AxisVelocities
+  opts['avela'] = avelf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Currents
-  acur  = acurf.find :AxisCurrents
-  acura = acurf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['acur']  = acurf.find :AxisCurrents
+  opts['acura'] = acurf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Voltage
-  avol  = avolf.find :AxisVoltage
-  avola = avolf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['avol']  = avolf.find :AxisVoltage
+  opts['avola'] = avolf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   #Momentum
-  amom = amomf.find :AxisMomentum
+  opts['amom'] = amomf.find :AxisMomentum
 
 
   ### TCP
@@ -178,14 +178,14 @@ Daemonite.new do |opts|
   apf, asf, aff = tcp.find :ActualPose, :ActualSpeed, :ActualForce
 
   ### TCP Pose
-  ap  = apf.find :TCPPose
-  apa = apf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['ap']  = apf.find :TCPPose
+  opts['apa'] = apf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   ### TCP Speed
-  as  = asf.find :TCPSpeed
-  asa = asf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['as']  = asf.find :TCPSpeed
+  opts['asa'] = asf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
   ### TCP Force
-  af  = aff.find :TCPForce
-  afa = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
+  opts['af']  = aff.find :TCPForce
+  opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
 
   #loading config file
@@ -194,7 +194,7 @@ Daemonite.new do |opts|
 
   #Connecting to universal robot
   opts['dash'] = UR::Dash.new(ipadress).connect
-  rtde = UR::Rtde.new(ipadress).connect
+  opts['rtde'] = UR::Rtde.new(ipadress).connect
 
   #parsing file system
   ssh = Net::SSH.start( ipadress, 'ur', password: "easybot" )
@@ -209,14 +209,14 @@ Daemonite.new do |opts|
 
   ## Set Speed to very slow
   speed_names, speed_types = conf.get_recipe('speed')
-  speed = rtde.send_input_setup(speed_names, speed_types)
-  speed["speed_slider_mask"] = 1
-  ov.value = 100
-  ov.value = speed["speed_slider_fraction"]
+  opts['speed'] = rtde.send_input_setup(speed_names, speed_types)
+  opts['speed']["speed_slider_mask"] = 1
+  opts['ov'].value = 100
+  opts['ov'].value = opts['speed']["speed_slider_fraction"]
 
 
   ### Setup output
-  if not rtde.send_output_setup(output_names, output_types)
+  if not opts['rtde'].send_output_setup(output_names, output_types)
     puts 'Unable to configure output'
   end
   if not rtde.send_start
