@@ -9,6 +9,16 @@ def add_axis_concept(context,item)
   context.add_variables item, :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 end
 
+def split_vector6_data(vector, item, nodes)
+  aqd = data['actual_qd'].to_s
+  item.value = vector.to_S
+  va = vector.to_S[1..-2].split(",")
+  va.each_with_index do |a,i|
+    a.value = nodes[i].to_f
+  end
+  [vector.to_s, va]
+end
+
 Daemonite.new do
 
   server = OPCUA::Server.new
@@ -249,6 +259,7 @@ Daemonite.new do
         aapa.each_with_index do |a,i|
           a.value = aqa[i].to_f
         end
+        split_vector6_data(data['actual_qd'],aap, aapa)
         #actual joint velocities
         aqd = data['actual_qd'].to_s
         avel.value = aqd
