@@ -198,7 +198,14 @@ Daemonite.new do
 
     #parsing file system
     ssh = Net::SSH.start( opts['ipadress'], 'ur', password: "easybot" )
-    programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
+    url = "/home/ur/ursim-current/programs.UR10"
+    folder = ssh.exec!("ls "+url).split("\n")
+    puts folder
+    folder.each do |f|
+      programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
+      p programs
+    end
+    #programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
     ssh.close()
     pff = robot.find(:Programs)
     programs.each do |n|
