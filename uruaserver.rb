@@ -19,12 +19,30 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
+def manifest_robot_programs
+  #parsing file system
+  ssh = Net::SSH.start( opts['ipadress'], 'ur', password: "easybot" )
+  url = "/home/ur/ursim-current/programs.UR10"
+  folder = ssh.exec!("ls "+url).split("\n")
+  puts folder
+  folder.each do |f|
+    programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
+    p programs
+  end
+  #programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
+  ssh.close()
+  pff = robot.find(:Programs)
+  programs.each do |n|
+    pff.manifest(n[0..-1],pf)
+  end
+end
+
 Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace "https://centurio.work/ur10evva"
-    opts['ipadress'] = '192.168.56.101'
-    #ipadress = 'localhost'
+    #opts['ipadress'] = '192.168.56.101'
+    opts['ipadress'] = 'localhost'
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
@@ -196,21 +214,7 @@ Daemonite.new do
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
-    #parsing file system
-    ssh = Net::SSH.start( opts['ipadress'], 'ur', password: "easybot" )
-    url = "/home/ur/ursim-current/programs.UR10"
-    folder = ssh.exec!("ls "+url).split("\n")
-    puts folder
-    folder.each do |f|
-      programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
-      p programs
-    end
-    #programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
-    ssh.close()
-    pff = robot.find(:Programs)
-    programs.each do |n|
-      pff.manifest(n[0..-1],pf)
-    end
+    #self.manifest_robot_programs
 
     return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
