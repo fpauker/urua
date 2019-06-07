@@ -29,7 +29,7 @@ def manifest_robot_programs
     programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
     p programs
   end
-  #programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
+  programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
   ssh.close()
   pff = robot.find(:Programs)
   programs.each do |n|
