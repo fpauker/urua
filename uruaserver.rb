@@ -92,7 +92,6 @@ Daemonite.new do
         p.add_object :Program, pf, OPCUA::OPTIONAL
       }
       r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
-        # do something
         p 'selected' if opts['dash'].load_program(program)
       end
       r.add_method :StartProgram do
@@ -105,13 +104,13 @@ Daemonite.new do
         opts['dash'].pause_program
       end
       r.add_method :PowerOn do
-        if @robmode != "Running"
+        if opts['rm'].to_s != "Running"
           Thread.new do
             if opts['dash'].power_on
               p 'poweron'
             end
-            while @robmode.to_s != 'Idle'
-              p @robmode
+            while opts['rm'].to_s != 'Idle'
+              p opts['rm']
               sleep 0.5
             end
             p 'break released' if opts['dash'].break_release
@@ -175,19 +174,19 @@ Daemonite.new do
     axes = robot.manifest(:Axes, ax)
     aapf, avelf, acurf, avolf, amomf = axes.find :ActualPositions, :ActualVelocities, :ActualCurrents, :ActualVoltage, :ActualMomentum
 
-    #Positions
+    ### Positions
     opts['aap']  = aapf.find :AxisPositions
     opts['aapa'] = aapf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
-    #Velocities
+    ### Velocities
     opts['avel']  = avelf.find :AxisVelocities
     opts['avela'] = avelf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
-    #Currents
+    ### Currents
     opts['acur']  = acurf.find :AxisCurrents
     opts['acura'] = acurf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
-    #Voltage
+    ### Voltage
     opts['avol']  = avolf.find :AxisVoltage
     opts['avola'] = avolf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
-    #Momentum
+    ### Momentum
     opts['amom'] = amomf.find :AxisMomentum
 
 
@@ -205,20 +204,20 @@ Daemonite.new do
     opts['af']  = aff.find :TCPForce
     opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
-
-    #loading config file
+    ### Loading config file
     conf = UR::XMLConfigFile.new "ua.conf.xml"
     output_names, output_types = conf.get_recipe('out')
 
-    #Connecting to universal robot
+    ###Connecting to universal robot
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
+    ### Manifest programs
     #self.manifest_robot_programs
 
     return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
-    ## Set Speed to very slow
+    ### Set Speed to very slow
     speed_names, speed_types = conf.get_recipe('speed')
     opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
     opts['speed']["speed_slider_mask"] = 1
@@ -257,7 +256,7 @@ Daemonite.new do
 
         #State objects
         opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
-        @robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
+        #@robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
         opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
         opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
         opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
