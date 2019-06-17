@@ -104,13 +104,14 @@ Daemonite.new do
         opts['dash'].pause_program
       end
       r.add_method :PowerOn do
-        if opts['rm'].to_s != "Running"
+        #p opts['rm'].value
+        if opts['rm'].value[0].to_s != "Running"
           Thread.new do
             if opts['dash'].power_on
-              p 'poweron'
+              #p 'powering on'
             end
-            while opts['rm'].to_s != 'Idle'
-              p opts['rm']
+            while opts['rm'].value[0].to_s != 'Idle'
+              #p opts['rm'].value
               sleep 0.5
             end
             p 'break released' if opts['dash'].break_release
