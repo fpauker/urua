@@ -17,9 +17,11 @@ gem install ur-sock
 ```
 
 ## Adress space
-![](/raw/master/adressspace/ur1.png)
 
-
+![Architecture](./adressspace/ur1.png?raw=true | width=50)
+![Architecture](./adressspace/ur2.png?raw=true | width=50)
+![Architecture](./adressspace/ur3.png?raw=true | width=50)
+![Architecture](./adressspace/ur5.png?raw=true | width=50)
 
 ## Contributing
 
