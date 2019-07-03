@@ -41,8 +41,8 @@ Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace "https://centurio.work/ur10evva"
-    #opts['ipadress'] = '192.168.56.101'
-    opts['ipadress'] = 'localhost'
+    opts['ipadress'] = '192.168.56.101'
+    #opts['ipadress'] = 'localhost'
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
@@ -208,7 +208,7 @@ Daemonite.new do
     ### Loading config file
     conf = UR::XMLConfigFile.new "ua.conf.xml"
     output_names, output_types = conf.get_recipe('out')
-
+    
     ###Connecting to universal robot
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
@@ -276,7 +276,7 @@ Daemonite.new do
         split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) #Actual TCP Force
 
         #write values
-        opts['speed']["speed_slider_fraction"] = opts['ov'].value[0]/100
+        opts['speed']["speed_slider_fraction"] = opts['ov'].value/100
         opts['rtde'].send(opts['speed'])
       end
 
