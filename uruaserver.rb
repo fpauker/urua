@@ -19,25 +19,29 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
-def manifest_robot_programs
+def get_robot_programs(ipadress, username, password, url)
   #parsing file system
   #puts 'Manifest'
-  ssh = Net::SSH.start( opts['ipadress'], 'ur', password: "easybot" )
-  url = "/home/ur/ursim-current/programs.UR10"
-  folder = ssh.exec!("ls "+url).split("\n")
-  puts folder
-  folder.each do |f|
-    programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
-    p programs
-  end
+  puts 'SSH'
+  ssh = Net::SSH.start(ipadress, username, password: password )
+  #folder = ssh.exec!("ls "+url).split("\n")
+  #puts folder
+  #folder.each do |f|
+  programs = ssh.exec!( "ls "+url+" | grep .urp" ).split( "\n" )
+  #end
 end
 
 Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace "https://centurio.work/ur10evva"
-    opts['ipadress'] = '192.168.56.101'
-    #opts['ipadress'] = 'localhost'
+    #opts['ipadress'] = '192.168.56.101'
+    opts['ipadress'] = 'localhost'
+    opts['username'] = 'paukerf87'
+    opts['password'] = nil
+    #opts['url'] = url = "/home/ur/ursim-current/programs.UR10"
+    opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
+
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
@@ -209,7 +213,11 @@ Daemonite.new do
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Manifest programs
-    self.manifest_robot_programs
+    programs = robot.find(:Programs)
+    progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+    progs.each do |p|
+      programs.manifest(p,pf)
+    end
 
     return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
@@ -236,11 +244,12 @@ Daemonite.new do
         sleep 1
       end
     end
+  rescue => e
+    puts e.message
+    puts e.backtrace
   end
 
   run do |opts|
-
-
       opts['server'].run
       data = opts['rtde'].receive
       if data
@@ -271,7 +280,7 @@ Daemonite.new do
         split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) #Actual TCP Force
 
         #write values
-        opts['speed']["speed_slider_fraction"] = opts['ov'].value/100
+        opts['speed']["speed_slider_fraction"] = opts['ov'].value / 100.0
         opts['rtde'].send(opts['speed'])
       end
 
