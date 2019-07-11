@@ -21,6 +21,7 @@ end
 
 def manifest_robot_programs
   #parsing file system
+  #puts 'Manifest'
   ssh = Net::SSH.start( opts['ipadress'], 'ur', password: "easybot" )
   url = "/home/ur/ursim-current/programs.UR10"
   folder = ssh.exec!("ls "+url).split("\n")
@@ -28,12 +29,6 @@ def manifest_robot_programs
   folder.each do |f|
     programs[folder.to_s] = ssh.exec!( "ls "+url+"/"+f+" | grep .urp" ).split( "\n" )
     p programs
-  end
-  programs = ssh.exec!( 'ls /home/ur/ursim-current/programs.UR10/UR10EVVA | grep .urp' ).split( "\n" )
-  ssh.close()
-  pff = robot.find(:Programs)
-  programs.each do |n|
-    pff.manifest(n[0..-1],pf)
   end
 end
 
@@ -208,13 +203,13 @@ Daemonite.new do
     ### Loading config file
     conf = UR::XMLConfigFile.new "ua.conf.xml"
     output_names, output_types = conf.get_recipe('out')
-    
+
     ###Connecting to universal robot
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Manifest programs
-    #self.manifest_robot_programs
+    self.manifest_robot_programs
 
     return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
