@@ -22,7 +22,6 @@ end
 def get_robot_programs(ipadress, username, password, url)
   #parsing file system
   #puts 'Manifest'
-  puts 'SSH'
   ssh = Net::SSH.start(ipadress, username, password: password )
   #folder = ssh.exec!("ls "+url).split("\n")
   #puts folder
@@ -89,6 +88,17 @@ Daemonite.new do
       }
       r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
         p.add_object :Program, pf, OPCUA::OPTIONAL
+        p.add_variable :Programs
+        opts['file'] = p.add_variable :File
+        p.add_method :Refresh do
+
+        end
+        p.add_method :SendToServer, program: OPCUA::TYPES::STRING do |node, program|
+
+        end
+        p.add_method :ReceiveFromServer, program: OPCUA::TYPES::STRING do |node,name|
+
+        end
       }
       r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
         p 'selected' if opts['dash'].load_program(program)
@@ -104,12 +114,12 @@ Daemonite.new do
       end
       r.add_method :PowerOn do
         #p opts['rm'].value
-        if opts['rm'].value[0].to_s != "Running"
+        if opts['rm'].value.to_s != "Running"
           Thread.new do
             if opts['dash'].power_on
               #p 'powering on'
             end
-            while opts['rm'].value[0].to_s != 'Idle'
+            while opts['rm'].value.to_s != 'Idle'
               #p opts['rm'].value
               sleep 0.5
             end
@@ -214,10 +224,12 @@ Daemonite.new do
 
     ### Manifest programs
     programs = robot.find(:Programs)
-    progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
-    progs.each do |p|
+    opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+    opts['progs'].each do |p|
       programs.manifest(p,pf)
     end
+    programs.find(:Programs).value = opts['progs']
+
 
     return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
@@ -225,8 +237,8 @@ Daemonite.new do
     speed_names, speed_types = conf.get_recipe('speed')
     opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
     opts['speed']["speed_slider_mask"] = 1
-    opts['ov'].value = 100
-    opts['ov'].value = opts['speed']["speed_slider_fraction"]
+    #opts['ov'].value = 100
+    opts['ov'].value = opts['speed']["speed_slider_fraction"].to_i
 
 
     ### Setup output
@@ -247,6 +259,7 @@ Daemonite.new do
   rescue => e
     puts e.message
     puts e.backtrace
+    exit
   end
 
   run do |opts|
