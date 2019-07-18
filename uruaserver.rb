@@ -259,7 +259,7 @@ Daemonite.new do
   rescue => e
     puts e.message
     puts e.backtrace
-    exit
+    raise
   end
 
   run do |opts|
