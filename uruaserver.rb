@@ -47,7 +47,7 @@ Daemonite.new do
 
 
     #ProgramFile
-    pf = opts['server'].types.add_object_type(:ProgramFile).tap{|p|
+    opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{|p|
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
         opts['dash'].load_program(a[a.size-2].to_s[0..-5])
@@ -87,7 +87,7 @@ Daemonite.new do
         r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
       }
       r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
-        p.add_object :Program, pf, OPCUA::OPTIONAL
+        p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
         p.add_variable :Programs
         opts['file'] = p.add_variable :File
         p.add_method :Refresh do
@@ -224,10 +224,10 @@ Daemonite.new do
 
     ### Manifest programs
     opts['programs'] = robot.find(:Programs)
-    opts['prognodes'] =[]
+    opts['prognodes'] ={}
     opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
     opts['progs'].each do |p|
-      opts['prognodes'].append(opts['programs'].manifest(p,pf))
+      opts['prognodes'][p] = opts['programs'].manifest(p,opts['pf'])
     end
     opts['programs'].find(:Programs).value = opts['progs']
   
@@ -250,19 +250,12 @@ Daemonite.new do
       puts 'Unable to start synchronization'
     end
 
-    Thread.new do
-      counter = 0
-      while opts['dash'] != nil
-        opts['cp'].value = opts['dash'].get_loaded_program
-        opts['rs'].value = opts['dash'].get_program_state
-        if counter >= 15 
-          counter = 0
-          opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+    # functionality for no threading
+    opts['doit1'] = Time.now.to_i
+    opts['doit10'] = Time.now.to_i
 
-
-        end
-        counter++
-        sleep 1
+    
+     
       end
     end
   rescue => e
@@ -273,6 +266,30 @@ Daemonite.new do
 
   run do |opts|
       opts['server'].run
+      
+      if Time.now.to_i - 1 > opts['doit1']
+        opts['doit1'] = Time.now.to_i  
+        opts['cp'].value = opts['dash'].get_loaded_program
+        opts['rs'].value = opts['dash'].get_program_state
+      end
+
+      if Time.now.to_i - 10 > opts['doit10']
+        #content of thread
+        opts['doit10'] = Time.now.to_i  
+        #check every 10 seconds for new programs
+        progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+        delete = opts['progs'] - progs
+        delete.each do |d|
+          opts['prognodes'][d].delete
+          opts['prognodes'].delete(d)
+        end
+        add = progs - opts['progs']
+        add.each do |a|
+          opts['prognodes'][a] = opts['programs'].manifest(a,opts['pf'])
+        end
+      end
+      
+
       data = opts['rtde'].receive
       if data
         #robot object
