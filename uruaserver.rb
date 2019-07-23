@@ -223,15 +223,16 @@ Daemonite.new do
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Manifest programs
-    programs = robot.find(:Programs)
+    opts['programs'] = robot.find(:Programs)
+    opts['prognodes'] =[]
     opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
     opts['progs'].each do |p|
-      programs.manifest(p,pf)
+      opts['prognodes'].append(opts['programs'].manifest(p,pf))
     end
-    programs.find(:Programs).value = opts['progs']
+    opts['programs'].find(:Programs).value = opts['progs']
+  
 
-
-    return if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
+    raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
     ### Set Speed to very slow
     speed_names, speed_types = conf.get_recipe('speed')
@@ -250,9 +251,17 @@ Daemonite.new do
     end
 
     Thread.new do
+      counter = 0
       while opts['dash'] != nil
         opts['cp'].value = opts['dash'].get_loaded_program
         opts['rs'].value = opts['dash'].get_program_state
+        if counter >= 15 
+          counter = 0
+          opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+
+
+        end
+        counter++
         sleep 1
       end
     end
