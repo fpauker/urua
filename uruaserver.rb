@@ -1,16 +1,16 @@
 #!/usr/bin/ruby
-#require 'opcua/server'
+# require 'opcua/server'
 require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
-#require 'ur-sock'
+# require 'ur-sock'
 require 'net/ssh'
 
-def add_axis_concept(context,item)
+def add_axis_concept(context, item)
   context.add_variables item, :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 end
 
 def split_vector6_data(vector, item, nodes)
-  #aqd = data['actual_qd'].to_s
+  # aqd = data['actual_qd'].to_s
   item.value = vector.to_s
   va = vector.to_s[1..-2].split(",")
   nodes.each_with_index do |a,i|
@@ -20,14 +20,9 @@ def split_vector6_data(vector, item, nodes)
 end
 
 def get_robot_programs(ipadress, username, password, url)
-  #parsing file system
-  #puts 'Manifest'
+  # parsing file system
   ssh = Net::SSH.start(ipadress, username, password: password )
-  #folder = ssh.exec!("ls "+url).split("\n")
-  #puts folder
-  #folder.each do |f|
-  programs = ssh.exec!( "ls "+url+" | grep .urp" ).split( "\n" )
-  #end
+  ssh.exec!("ls " + url + " | grep .urp").split("\n")
 end
 
 Daemonite.new do
@@ -35,20 +30,20 @@ Daemonite.new do
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace "https://centurio.work/ur10evva"
     opts['ipadress'] = '192.168.56.101'
-    #opts['ipadress'] = 'localhost'
+    # opts['ipadress'] = 'localhost'
     opts['username'] = 'paukerf87'
     opts['username'] = 'ur'
     opts['password'] = 'easybot'
     opts['url'] = url = "/home/ur/ursim-current/programs.UR10"
-    #opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
+    # opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
 
 
-    #ProgramFile
-    opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{|p|
+    # ProgramFile
+    opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
         opts['dash'].load_program(a[a.size-2].to_s[0..-5])
@@ -63,13 +58,13 @@ Daemonite.new do
         opts['dash'].pause_program
       end
     }
-    #TCP ObjectType
+    # TCP ObjectType
     tcp = opts['server'].types.add_object_type(:Tcp).tap{ |t|
       t.add_object(:ActualPose, opts['server'].types.folder).tap { |p| add_axis_concept p, :TCPPose }
       t.add_object(:ActualSpeed, opts['server'].types.folder).tap{ |p| add_axis_concept p, :TCPSpeed }
       t.add_object(:ActualForce, opts['server'].types.folder).tap{ |p| add_axis_concept p, :TCPForce }
     }
-    #AxisObjectType
+    # AxisObjectType
     ax = opts['server'].types.add_object_type(:AxisType).tap{|a|
       a.add_object(:ActualPositions, opts['server'].types.folder).tap { |p| add_axis_concept p, :AxisPositions }
       a.add_object(:ActualVelocities, opts['server'].types.folder).tap{ |p| add_axis_concept p, :AxisVelocities }
@@ -78,7 +73,7 @@ Daemonite.new do
       a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
     }
 
-    #RobotObjectType
+    # RobotObjectType
     rt = opts['server'].types.add_object_type(:RobotType).tap{ |r|
       r.add_object(:State, opts['server'].types.folder).tap{ |s|
         s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling
@@ -114,14 +109,9 @@ Daemonite.new do
         opts['dash'].pause_program
       end
       r.add_method :PowerOn do
-        #p opts['rm'].value
-        if opts['rm'].value.to_s != "Running"
+        if opts['rm'].value.to_s != 'Running'
           Thread.new do
-            if opts['dash'].power_on
-              #p 'powering on'
-            end
             while opts['rm'].value.to_s != 'Idle'
-              #p opts['rm'].value
               sleep 0.5
             end
             p 'break released' if opts['dash'].break_release
