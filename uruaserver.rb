@@ -34,12 +34,13 @@ Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace "https://centurio.work/ur10evva"
-    #opts['ipadress'] = '192.168.56.101'
-    opts['ipadress'] = 'localhost'
+    opts['ipadress'] = '192.168.56.101'
+    #opts['ipadress'] = 'localhost'
     opts['username'] = 'paukerf87'
-    opts['password'] = nil
-    #opts['url'] = url = "/home/ur/ursim-current/programs.UR10"
-    opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
+    opts['username'] = 'ur'
+    opts['password'] = 'easybot'
+    opts['url'] = url = "/home/ur/ursim-current/programs.UR10"
+    #opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
     opts['dash'] = nil
     opts['rtde'] = nil
@@ -250,14 +251,10 @@ Daemonite.new do
       puts 'Unable to start synchronization'
     end
 
-    # functionality for no threading
+    # functionality for threading in loop
     opts['doit1'] = Time.now.to_i
     opts['doit10'] = Time.now.to_i
 
-    
-     
-      end
-    end
   rescue => e
     puts e.message
     puts e.backtrace
@@ -265,68 +262,68 @@ Daemonite.new do
   end
 
   run do |opts|
-      opts['server'].run
-      
-      if Time.now.to_i - 1 > opts['doit1']
-        opts['doit1'] = Time.now.to_i  
-        opts['cp'].value = opts['dash'].get_loaded_program
-        opts['rs'].value = opts['dash'].get_program_state
+    opts['server'].run
+    
+    if Time.now.to_i - 1 > opts['doit1']
+      opts['doit1'] = Time.now.to_i  
+      opts['cp'].value = opts['dash'].get_loaded_program
+      opts['rs'].value = opts['dash'].get_program_state
+    end
+
+    if Time.now.to_i - 10 > opts['doit10']
+      #content of thread
+      opts['doit10'] = Time.now.to_i  
+      #check every 10 seconds for new programs
+      progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+      delete = opts['progs'] - progs
+      delete.each do |d|
+        opts['prognodes'][d].delete
+        opts['prognodes'].delete(d)
       end
-
-      if Time.now.to_i - 10 > opts['doit10']
-        #content of thread
-        opts['doit10'] = Time.now.to_i  
-        #check every 10 seconds for new programs
-        progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
-        delete = opts['progs'] - progs
-        delete.each do |d|
-          opts['prognodes'][d].delete
-          opts['prognodes'].delete(d)
-        end
-        add = progs - opts['progs']
-        add.each do |a|
-          opts['prognodes'][a] = opts['programs'].manifest(a,opts['pf'])
-        end
+      add = progs - opts['progs']
+      add.each do |a|
+        opts['prognodes'][a] = opts['programs'].manifest(a,opts['pf'])
       end
-      
+    end
+    
+    data = opts['rtde'].receive
+    if data
+      #robot object
+      opts['mv'].value = data['actual_main_voltage']
+      opts['rv'].value = data['actual_robot_voltage']
+      opts['rc'].value = data['actual_robot_current']
+      opts['ss'].value = data['speed_scaling']
 
-      data = opts['rtde'].receive
-      if data
-        #robot object
-        opts['mv'].value = data['actual_main_voltage']
-        opts['rv'].value = data['actual_robot_voltage']
-        opts['rc'].value = data['actual_robot_current']
-        opts['ss'].value = data['speed_scaling']
+      #State objects
+      opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
+      #@robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
+      opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
+      opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
+      opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
+      opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
 
-        #State objects
-        opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
-        #@robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
-        opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
-        opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
-        opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
-        opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
+      #Axes object
+      split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) #actual jont positions
+      split_vector6_data(data['actual_qd'],opts['avel'], opts['avela']) #actual joint velocities
+      split_vector6_data(data['actual_joint_voltage'],opts['avol'], opts['avola']) # #actual joint voltage
+      split_vector6_data(data['actual_current'],opts['acur'], opts['acura']) #actual current
+      opts['amom'].value = data['actual_momentum'].to_s   #actual_momentum
 
-        #Axes object
-        split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) #actual jont positions
-        split_vector6_data(data['actual_qd'],opts['avel'], opts['avela']) #actual joint velocities
-        split_vector6_data(data['actual_joint_voltage'],opts['avol'], opts['avola']) # #actual joint voltage
-        split_vector6_data(data['actual_current'],opts['acur'], opts['acura']) #actual current
-        opts['amom'].value = data['actual_momentum'].to_s   #actual_momentum
+      # #TCP object
+      split_vector6_data(data['actual_qd'],opts['ap'], opts['apa']) #Actual TCP Pose
+      split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) #Actual TCP Speed
+      split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) #Actual TCP Force
 
-        # #TCP object
-        split_vector6_data(data['actual_qd'],opts['ap'], opts['apa']) #Actual TCP Pose
-        split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) #Actual TCP Speed
-        split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) #Actual TCP Force
-
-        #write values
-        opts['speed']["speed_slider_fraction"] = opts['ov'].value / 100.0
-        opts['rtde'].send(opts['speed'])
-      end
+      #write values
+      opts['speed']["speed_slider_fraction"] = opts['ov'].value / 100.0
+      opts['rtde'].send(opts['speed'])
+    end
 
   rescue Errno::ECONNREFUSED => e
     puts 't'
   rescue => e
     puts e.message
+    puts e.backtrace
   end
   on exit do
     #reserved for important stuff
