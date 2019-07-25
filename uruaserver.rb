@@ -206,11 +206,11 @@ Daemonite.new do
 
     ### Manifest programs
     opts['programs'] = robot.find(:Programs)
+
     opts['prognodes'] = {}
     opts['progs'] = get_robot_programs(opts['ssh'],opts['url'])
     opts['progs'].each do |pr|
       pr = pr[0..-5]
-      p pr
       opts['prognodes'][pr] = opts['programs'].manifest(pr, opts['pf'])
     end
     opts['programs'].find(:Programs).value = opts['progs']
@@ -223,7 +223,6 @@ Daemonite.new do
     opts['speed']['speed_slider_mask'] = 1
     # opts['ov'].value = 100
     opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
-
 
     ### Setup output
     if not opts['rtde'].send_output_setup(output_names, output_types)
@@ -252,33 +251,27 @@ Daemonite.new do
     end
 
     if Time.now.to_i - 10 > opts['doit10']
-      # Content of thread
-      opts['doit10'] = Time.now.to_i
-      # check every 10 seconds for new programs
-      progs = get_robot_programs(opts['ssh'],opts['url'])
-      delete = opts['progs'] - progs
-
-      puts opts['prognodes'].to_s
-
-      puts 'Missing Nodes: ' + delete.to_s
-      delete.each do |d|
-        d = d[0..-5]
-        opts['prognodes'][d].delete!
-        opts['prognodes'].delete(d)
+      Thread.new do
+        # Content of thread
+        opts['doit10'] = Time.now.to_i
+        # check every 10 seconds for new programs
+        progs = get_robot_programs(opts['ssh'],opts['url'])
+        delete = opts['progs'] - progs
+        puts 'Missing Nodes: ' + delete.to_s
+        delete.each do |d|
+          d = d[0..-5]
+          opts['prognodes'][d].delete!
+          opts['prognodes'].delete(d)
+        end
+        add = progs - opts['progs']
+        puts 'New nodes: ' + add.to_s
+        add.each do |a|
+          a = a[0..-5]
+          opts['prognodes'][a] = opts['programs'].manifest(a, opts['pf'])
+        end
+        opts['progs'] = progs.dup
+        opts['programs'].find(:Programs).value = opts['progs']
       end
-      add = progs - opts['progs']
-      puts 'New nodes: ' + add.to_s
-      add.each do |a|
-        a = a[0..-5]
-        puts a
-        puts opts['prognodes'].key?(a)
-        p 'xxxxxxxxxxxxxxxxxx'
-
-        opts['prognodes'][a.to_s] = opts['programs'].manifest(a.to_s, opts['pf'])
-        # opts['programs'].manifest(a, opts['pf'])
-      end
-      opts['progs'] = progs.dup
-      opts['programs'].find(:Programs).value = opts['progs']
     end
 
     data = opts['rtde'].receive
