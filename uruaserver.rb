@@ -21,7 +21,6 @@ end
 
 def get_robot_programs(ipadress, username, password, url)
   # parsing file system
-  p password
   ssh = if password.nil?
     Net::SSH.start(ipadress, username)
   else
@@ -39,7 +38,7 @@ Daemonite.new do
     opts['username'] = 'paukerf87'
     # opts['username'] = 'ur'
     # opts['password'] = 'easybot'
-    opts['url'] = '/home/ur/ursim-current/programs.UR10'
+    opts['url'] = 'ursim-current/programs.UR10'
     # opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
     opts['dash'] = nil
@@ -217,6 +216,7 @@ Daemonite.new do
     opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
     opts['progs'].each do |pr|
       pr = pr[0..-5]
+      p pr
       opts['prognodes'][pr] = opts['programs'].manifest(pr, opts['pf'])
     end
     opts['programs'].find(:Programs).value = opts['progs']
