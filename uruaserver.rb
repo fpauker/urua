@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
-# require 'opcua/server'
-require_relative '../opcua-smart/lib/opcua/server'
+require 'opcua/server'
+# require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
 # require 'ur-sock'
 require 'net/ssh'
@@ -12,8 +12,8 @@ end
 def split_vector6_data(vector, item, nodes)
   # aqd = data['actual_qd'].to_s
   item.value = vector.to_s
-  va = vector.to_s[1..-2].split(",")
-  nodes.each_with_index do |a,i|
+  va = vector.to_s[1..-2].split(',')
+  nodes.each_with_index do |a, i|
     a.value = vector[i].to_f
   end
   [vector.to_s, va]
@@ -21,20 +21,20 @@ end
 
 def get_robot_programs(ipadress, username, password, url)
   # parsing file system
-  ssh = Net::SSH.start(ipadress, username, password: password )
-  ssh.exec!("ls " + url + " | grep .urp").split("\n")
+  ssh = Net::SSH.start(ipadress, username, password: password)
+  ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
 end
 
 Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
-    opts['server'].add_namespace "https://centurio.work/ur10evva"
+    opts['server'].add_namespace 'https://centurio.work/ur10evva'
     opts['ipadress'] = '192.168.56.101'
     # opts['ipadress'] = 'localhost'
     opts['username'] = 'paukerf87'
     opts['username'] = 'ur'
     opts['password'] = 'easybot'
-    opts['url'] = url = "/home/ur/ursim-current/programs.UR10"
+    opts['url'] = '/home/ur/ursim-current/programs.UR10'
     # opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
     opts['dash'] = nil
@@ -46,7 +46,7 @@ Daemonite.new do
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
-        opts['dash'].load_program(a[a.size-2].to_s[0..-5])
+        opts['dash'].load_program(a[a.size - 2].to_s[0..-5])
       end
       p.add_method :StartProgram do
         opts['dash'].start_program
@@ -65,7 +65,7 @@ Daemonite.new do
       t.add_object(:ActualForce, opts['server'].types.folder).tap{ |p| add_axis_concept p, :TCPForce }
     }
     # AxisObjectType
-    ax = opts['server'].types.add_object_type(:AxisType).tap{|a|
+    ax = opts['server'].types.add_object_type(:AxisType).tap { |a|
       a.add_object(:ActualPositions, opts['server'].types.folder).tap { |p| add_axis_concept p, :AxisPositions }
       a.add_object(:ActualVelocities, opts['server'].types.folder).tap{ |p| add_axis_concept p, :AxisVelocities }
       a.add_object(:ActualCurrents, opts['server'].types.folder).tap  { |p| add_axis_concept p, :AxisCurrents }
@@ -74,7 +74,7 @@ Daemonite.new do
     }
 
     # RobotObjectType
-    rt = opts['server'].types.add_object_type(:RobotType).tap{ |r|
+    rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
       r.add_object(:State, opts['server'].types.folder).tap{ |s|
         s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling
         s.add_variable_rw :Override
@@ -87,13 +87,13 @@ Daemonite.new do
         p.add_variable :Programs
         opts['file'] = p.add_variable :File
         p.add_method :Refresh do
-
+          # tbd
         end
         p.add_method :SendToServer, program: OPCUA::TYPES::STRING do |node, program|
-
+          # tbd
         end
         p.add_method :ReceiveFromServer, program: OPCUA::TYPES::STRING do |node,name|
-
+          # tbd
         end
       }
       r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
@@ -111,8 +111,7 @@ Daemonite.new do
       r.add_method :PowerOn do
         if opts['rm'].value.to_s != 'Running'
           Thread.new do
-            until opts['rm'].value.to_s == 'Idle'do sleep 0.5
-            
+            sleep 0.5 until opts['rm'].value.to_s == 'Idle'
             puts 'break released' if opts['dash'].break_release
           end
         end
@@ -147,7 +146,6 @@ Daemonite.new do
         end
       }
     }
-
     ### populating the adress space
     ### Robot object
     robot = opts['server'].objects.manifest(:UR10e, rt)
@@ -188,12 +186,9 @@ Daemonite.new do
     opts['avola'] = avolf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
     ### Momentum
     opts['amom'] = amomf.find :AxisMomentum
-
-
     ### TCP
     tcp = robot.manifest(:Tcp, tcp)
     apf, asf, aff = tcp.find :ActualPose, :ActualSpeed, :ActualForce
-
     ### TCP Pose
     opts['ap']  = apf.find :TCPPose
     opts['apa'] = apf.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
@@ -205,31 +200,31 @@ Daemonite.new do
     opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
     ### Loading config file
-    conf = UR::XMLConfigFile.new "ua.conf.xml"
+    conf = UR::XMLConfigFile.new 'ua.conf.xml'
     output_names, output_types = conf.get_recipe('out')
 
-    ###Connecting to universal robot
+    ### Connecting to universal robot
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Manifest programs
     opts['programs'] = robot.find(:Programs)
-    opts['prognodes'] ={}
+    opts['prognodes'] = {}
     opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
-    opts['progs'].each do |p|
-      opts['prognodes'][p] = opts['programs'].manifest(p,opts['pf'])
+    opts['progs'].each do |pr|
+      pr = pr[0..-5]
+      opts['prognodes'][pr] = opts['programs'].manifest(pr, opts['pf'])
     end
     opts['programs'].find(:Programs).value = opts['progs']
-  
-
+    ### check if interfaces are ok
     raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
     ### Set Speed to very slow
     speed_names, speed_types = conf.get_recipe('speed')
     opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
-    opts['speed']["speed_slider_mask"] = 1
-    #opts['ov'].value = 100
-    opts['ov'].value = opts['speed']["speed_slider_fraction"].to_i
+    opts['speed']['speed_slider_mask'] = 1
+    # opts['ov'].value = 100
+    opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
 
 
     ### Setup output
@@ -243,7 +238,6 @@ Daemonite.new do
     # functionality for threading in loop
     opts['doit1'] = Time.now.to_i
     opts['doit10'] = Time.now.to_i
-
   rescue => e
     puts e.message
     puts e.backtrace
@@ -252,71 +246,82 @@ Daemonite.new do
 
   run do |opts|
     opts['server'].run
-    
+
     if Time.now.to_i - 1 > opts['doit1']
-      opts['doit1'] = Time.now.to_i  
+      opts['doit1'] = Time.now.to_i
       opts['cp'].value = opts['dash'].get_loaded_program
       opts['rs'].value = opts['dash'].get_program_state
     end
 
     if Time.now.to_i - 10 > opts['doit10']
-      #content of thread
+      # Content of thread
       opts['doit10'] = Time.now.to_i  
-      #check every 10 seconds for new programs
+      # check every 10 seconds for new programs
       progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
       delete = opts['progs'] - progs
+
+      puts opts['prognodes'].to_s
+
+      puts 'Missing Nodes: ' + delete.to_s
       delete.each do |d|
-        opts['prognodes'][d].delete
+        d = d[0..-5]
+        opts['prognodes'][d].delete!
         opts['prognodes'].delete(d)
       end
       add = progs - opts['progs']
+      puts 'New nodes: ' + add.to_s
       add.each do |a|
-        opts['prognodes'][a] = opts['programs'].manifest(a,opts['pf'])
+        a = a[0..-5]
+        puts a
+        puts opts['prognodes'].key?(a)
+        opts['prognodes'][a.to_s] = opts['programs'].manifest(a.to_s, opts['pf'])
+        # opts['programs'].manifest(a, opts['pf'])
       end
+      opts['progs'] = progs.dup
+      opts['programs'].find(:Programs).value = opts['progs']
     end
-    
+
     data = opts['rtde'].receive
     if data
-      #robot object
+      # robot object
       opts['mv'].value = data['actual_main_voltage']
       opts['rv'].value = data['actual_robot_voltage']
       opts['rc'].value = data['actual_robot_current']
       opts['ss'].value = data['speed_scaling']
 
-      #State objects
+      # State objects
       opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
-      #@robmode = UR::Rtde::ROBOTMODE[data['robot_mode']]
       opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
       opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
       opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
       opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
 
-      #Axes object
-      split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) #actual jont positions
-      split_vector6_data(data['actual_qd'],opts['avel'], opts['avela']) #actual joint velocities
-      split_vector6_data(data['actual_joint_voltage'],opts['avol'], opts['avola']) # #actual joint voltage
-      split_vector6_data(data['actual_current'],opts['acur'], opts['acura']) #actual current
-      opts['amom'].value = data['actual_momentum'].to_s   #actual_momentum
+      # Axes object
+      split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) # actual jont positions
+      split_vector6_data(data['actual_qd'],opts['avel'], opts['avela']) # actual joint velocities
+      split_vector6_data(data['actual_joint_voltage'],opts['avol'], opts['avola']) # actual joint voltage
+      split_vector6_data(data['actual_current'],opts['acur'], opts['acura']) # actual current
+      opts['amom'].value = data['actual_momentum'].to_s # actual_momentum
 
       # #TCP object
-      split_vector6_data(data['actual_qd'],opts['ap'], opts['apa']) #Actual TCP Pose
-      split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) #Actual TCP Speed
-      split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) #Actual TCP Force
+      split_vector6_data(data['actual_qd'],opts['ap'], opts['apa']) # Actual TCP Pose
+      split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) # Actual TCP Speed
+      split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
-      #write values
-      opts['speed']["speed_slider_fraction"] = opts['ov'].value / 100.0
+      # Write values
+      opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
       opts['rtde'].send(opts['speed'])
     end
 
   rescue Errno::ECONNREFUSED => e
-    puts 't'
+    puts 'ECONNREFUSED:'
+    puts e.message
   rescue => e
     puts e.message
     puts e.backtrace
   end
   on exit do
-    #reserved for important stuff
+    # reserved for important stuff
     p 'bye'
   end
-
 end.loop!
