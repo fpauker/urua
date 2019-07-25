@@ -19,14 +19,10 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
-def get_robot_programs(ipadress, username, password, url)
-  # parsing file system
-  ssh = if password.nil?
-    Net::SSH.start(ipadress, username)
-  else
-    Net::SSH.start(ipadress, username, password: password)
-  end
-  ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
+def get_robot_programs(ssh,url)
+  x = ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
+  p x
+  x
 end
 
 Daemonite.new do
@@ -39,11 +35,11 @@ Daemonite.new do
     # opts['username'] = 'ur'
     # opts['password'] = 'easybot'
     opts['url'] = 'ursim-current/programs.UR10'
-    # opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
+    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username']) : Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password'])
 
     # ProgramFile
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
@@ -213,7 +209,7 @@ Daemonite.new do
     ### Manifest programs
     opts['programs'] = robot.find(:Programs)
     opts['prognodes'] = {}
-    opts['progs'] = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+    opts['progs'] = get_robot_programs(opts['ssh'],opts['url'])
     opts['progs'].each do |pr|
       pr = pr[0..-5]
       p pr
@@ -261,7 +257,7 @@ Daemonite.new do
       # Content of thread
       opts['doit10'] = Time.now.to_i
       # check every 10 seconds for new programs
-      progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
+      progs = get_robot_programs(opts['ssh'],opts['url'])
       delete = opts['progs'] - progs
 
       puts opts['prognodes'].to_s
