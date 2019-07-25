@@ -20,9 +20,7 @@ def split_vector6_data(vector, item, nodes)
 end
 
 def get_robot_programs(ssh,url)
-  x = ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
-  p x
-  x
+  ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
 end
 
 Daemonite.new do
@@ -274,6 +272,8 @@ Daemonite.new do
         a = a[0..-5]
         puts a
         puts opts['prognodes'].key?(a)
+        p 'xxxxxxxxxxxxxxxxxx'
+
         opts['prognodes'][a.to_s] = opts['programs'].manifest(a.to_s, opts['pf'])
         # opts['programs'].manifest(a, opts['pf'])
       end
