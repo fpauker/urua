@@ -1,4 +1,4 @@
-#c!/usr/bin/ruby
+#!/usr/bin/ruby
 # require 'opcua/server'
 require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
@@ -21,7 +21,12 @@ end
 
 def get_robot_programs(ipadress, username, password, url)
   # parsing file system
-  ssh = Net::SSH.start(ipadress, username, password: password)
+  p password
+  ssh = if password.nil?
+    Net::SSH.start(ipadress, username)
+  else
+    Net::SSH.start(ipadress, username, password: password)
+  end
   ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
 end
 
@@ -29,11 +34,11 @@ Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace 'https://centurio.work/ur10evva'
-    opts['ipadress'] = '192.168.56.101'
-    # opts['ipadress'] = 'localhost'
+    # opts['ipadress'] = '192.168.56.101'
+    opts['ipadress'] = 'localhost'
     opts['username'] = 'paukerf87'
-    opts['username'] = 'ur'
-    opts['password'] = 'easybot'
+    # opts['username'] = 'ur'
+    # opts['password'] = 'easybot'
     opts['url'] = '/home/ur/ursim-current/programs.UR10'
     # opts['url'] = url = "/home/paukerf87/projects/ursim-5.3.1.64192/programs.UR5"
 
@@ -254,7 +259,7 @@ Daemonite.new do
 
     if Time.now.to_i - 10 > opts['doit10']
       # Content of thread
-      opts['doit10'] = Time.now.to_i  
+      opts['doit10'] = Time.now.to_i
       # check every 10 seconds for new programs
       progs = get_robot_programs(opts['ipadress'], opts['username'], opts['password'], opts['url'])
       delete = opts['progs'] - progs
