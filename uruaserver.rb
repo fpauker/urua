@@ -1,6 +1,6 @@
 #!/usr/bin/ruby
-require 'opcua/server'
-# require_relative '../opcua-smart/lib/opcua/server'
+# require 'opcua/server'
+require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
 # require 'ur-sock'
 require 'net/ssh'
