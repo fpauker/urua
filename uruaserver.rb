@@ -1,4 +1,4 @@
-#!/usr/bin/ruby
+#c!/usr/bin/ruby
 # require 'opcua/server'
 require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
@@ -40,7 +40,6 @@ Daemonite.new do
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
-
 
     # ProgramFile
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
