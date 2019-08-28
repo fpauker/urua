@@ -27,11 +27,13 @@ Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace 'https://centurio.work/ur10evva'
-    # opts['ipadress'] = '192.168.56.101'
-    opts['ipadress'] = 'localhost'
-    opts['username'] = 'paukerf87'
-    # opts['username'] = 'ur'
-    # opts['password'] = 'easybot'
+    ### simulation
+    # opts['ipadress'] = 'localhost'
+    # opts['username'] = 'paukerf87'
+    ### PF
+    opts['ipadress'] = '192.168.30.200'
+    opts['username'] = 'ur'
+    opts['password'] = 'easybot'
     opts['url'] = 'ursim-current/programs.UR10'
 
     opts['dash'] = nil
