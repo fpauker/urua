@@ -32,14 +32,14 @@ Daemonite.new do
     # opts['username'] = 'paukerf87'
     ### PF
     opts['ipadress'] = '192.168.30.200'
-    opts['username'] = 'ur'
+    opts['username'] = 'root'
     opts['password'] = 'easybot'
     opts['url'] = 'ursim-current/programs.UR10'
 
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
-    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username']) : Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password'])
+    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
 
     # ProgramFile
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
