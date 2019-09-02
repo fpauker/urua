@@ -20,39 +20,38 @@ def split_vector6_data(vector, item, nodes)
 end
 
 def get_robot_programs(ssh,url)
-  ssh.exec!('ls ' + url + ' | grep .urp').split("\n")
+  ssh.exec!('ls ' + File.join(url,'*.urp') + ' 2>/dev/null').split("\n")
 end
 
 Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
     opts['server'].add_namespace 'https://centurio.work/ur10evva'
-    # opts['ipadress'] = '192.168.56.101'
-    opts['ipadress'] = 'localhost'
-    opts['username'] = 'paukerf87'
-    # opts['username'] = 'ur'
-    # opts['password'] = 'easybot'
-    opts['url'] = 'ursim-current/programs.UR10'
+    ### simulation
+    # opts['ipadress'] = 'localhost'
+    # opts['username'] = 'paukerf87'
+    # opts['url'] = 'ursim-current/programs.UR10'
+    ### PF
+    opts['ipadress'] = '192.168.30.200'
+    opts['username'] = 'root'
+    opts['password'] = 'easybot'
+    opts['url'] = '/programs'
 
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
-    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username']) : Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password'])
+    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
 
     # ProgramFile
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
-        opts['dash'].load_program(a[a.size - 2].to_s[0..-5])
+        opts['dash'].load_program(a[a.size - 2])
       end
-      p.add_method :StartProgram do
+      p.add_method :StartProgram do |node|
+        a = node.id.to_s.split('/')
+        opts['dash'].load_program(a[a.size - 2])
         opts['dash'].start_program
-      end
-      p.add_method :StopProgram do
-        opts['dash'].stop_program
-      end
-      p.add_method :PauseProgram do
-        opts['dash'].pause_program
       end
     }
     # TCP ObjectType
@@ -225,7 +224,7 @@ Daemonite.new do
     opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
 
     ### Setup output
-    if not opts['rtde'].send_output_setup(output_names, output_types)
+    if not opts['rtde'].send_output_setup(output_names, output_types,10)
       puts 'Unable to configure output'
     end
     if not opts['rtde'].send_start
@@ -257,14 +256,14 @@ Daemonite.new do
         # check every 10 seconds for new programs
         progs = get_robot_programs(opts['ssh'],opts['url'])
         delete = opts['progs'] - progs
-        puts 'Missing Nodes: ' + delete.to_s
+        # puts 'Missing Nodes: ' + delete.to_s
         delete.each do |d|
           d = d[0..-5]
           opts['prognodes'][d].delete!
           opts['prognodes'].delete(d)
         end
         add = progs - opts['progs']
-        puts 'New nodes: ' + add.to_s
+        # puts 'New nodes: ' + add.to_s
         add.each do |a|
           a = a[0..-5]
           opts['prognodes'][a] = opts['programs'].manifest(a, opts['pf'])
