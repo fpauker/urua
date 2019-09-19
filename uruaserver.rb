@@ -32,7 +32,7 @@ Daemonite.new do
     # opts['username'] = 'paukerf87'
     # opts['url'] = 'ursim-current/programs.UR10'
     ### PF
-    opts['ipadress'] = '192.168.30.200'
+    opts['ipadress'] = '10.0.31.22'
     opts['username'] = 'root'
     opts['password'] = 'easybot'
     opts['url'] = '/programs'
@@ -309,6 +309,7 @@ Daemonite.new do
     puts 'ECONNREFUSED:'
     puts e.message
   rescue => e
+    opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
     puts e.message
     puts e.backtrace
   end
