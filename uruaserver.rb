@@ -186,8 +186,8 @@ Daemonite.new do
     opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
     ### Loading config file
-    conf = UR::XMLConfigFile.new 'ua.conf.xml'
-    output_names, output_types = conf.get_recipe('out')
+    conf = UR::XMLConfigFile.new opts['rtde_config']
+    output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
 
     ### Connecting to universal robot
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect
@@ -207,7 +207,7 @@ Daemonite.new do
     raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
     ### Set Speed to very slow
-    speed_names, speed_types = conf.get_recipe('speed')
+    speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
     opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
     opts['speed']['speed_slider_mask'] = 1
     # opts['ov'].value = 100
