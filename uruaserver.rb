@@ -26,17 +26,7 @@ end
 Daemonite.new do
   on startup do |opts|
     opts['server'] = OPCUA::Server.new
-    opts['server'].add_namespace 'https://centurio.work/ur10evva'
-    ### simulation
-    # opts['ipadress'] = 'localhost'
-    # opts['username'] = 'paukerf87'
-    # opts['url'] = 'ursim-current/programs.UR10'
-    ### PF
-    opts['ipadress'] = '10.0.31.22'
-    opts['username'] = 'root'
-    opts['password'] = 'easybot'
-    opts['url'] = '/programs'
-
+    opts['server'].add_namespace opts['namespace']
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
