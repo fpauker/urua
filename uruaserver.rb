@@ -62,7 +62,7 @@ Daemonite.new do
     # RobotObjectType
     rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
       r.add_object(:State, opts['server'].types.folder).tap{ |s|
-        s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling
+        s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote
         s.add_variable_rw :Override
       }
       r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
@@ -153,6 +153,7 @@ Daemonite.new do
     opts['cp'] = st.find(:CurrentProgram)
     opts['ov'] = st.find(:Override)
     opts['ss'] = st.find(:SpeedScaling)
+    opts['mo'] = st.find(:Remote)
 
     ### Axes
     axes = robot.manifest(:Axes, ax)
@@ -207,11 +208,13 @@ Daemonite.new do
     raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
     ### Set Speed to very slow
-    speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
-    opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
-    opts['speed']['speed_slider_mask'] = 1
-    # opts['ov'].value = 100
-    opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
+    if opts['rtde_config_recipe_speed'] 
+      speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed'] 
+      opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
+      opts['speed']['speed_slider_mask'] = 1
+      # opts['ov'].value = 100
+      opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
+    end  
 
     ### Setup output
     if not opts['rtde'].send_output_setup(output_names, output_types,10)
@@ -246,7 +249,7 @@ Daemonite.new do
         # check every 10 seconds for new programs
         progs = get_robot_programs(opts['ssh'],opts['url'])
         delete = opts['progs'] - progs
-        # puts 'Missing Nodes: ' + delete.to_s
+        puts 'Missing Nodes: ' + delete.to_s
         delete.each do |d|
           d = d[0..-5]
           opts['prognodes'][d].delete!
@@ -277,6 +280,7 @@ Daemonite.new do
       opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
       opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
       opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
+      opts['mo'].value = true
 
       # Axes object
       split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) # actual jont positions
@@ -291,17 +295,22 @@ Daemonite.new do
       split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
       # Write values
-      opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
-      opts['rtde'].send(opts['speed'])
+      if opts['rtde_config_recipe_speed'] 
+        opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
+        opts['rtde'].send(opts['speed'])
+      end
     end
 
   rescue Errno::ECONNREFUSED => e
     puts 'ECONNREFUSED:'
     puts e.message
-  rescue => e
+  rescue UR::Dash::Error => e
+    p 'remote'
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
-    puts e.message
-    puts e.backtrace
+    opts['mo'].value = false
+  rescue => e
+    p e.message
+    p e.backtrace
   end
   on exit do
     # reserved for important stuff
