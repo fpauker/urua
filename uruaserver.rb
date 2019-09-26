@@ -19,6 +19,20 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
+def protect_reconnect_run(opts)
+  tries = 0
+  begin
+    yield
+  rescue UR::Dash::Reconnect => e
+    tries += 1
+    if tries < 2
+      opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
+      opts['mo'].value = false
+      retry
+    end  
+  end  
+end
+
 def get_robot_programs(ssh,url)
   ssh.exec!('ls ' + File.join(url,'*.urp') + ' 2>/dev/null').split("\n")
 end
@@ -36,12 +50,16 @@ Daemonite.new do
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
-        opts['dash'].load_program(a[a.size - 2])
+        protect_reconnect_run(opts) do
+          opts['dash'].load_program(a[a.size - 2])
+        end
       end
       p.add_method :StartProgram do |node|
         a = node.id.to_s.split('/')
-        opts['dash'].load_program(a[a.size - 2])
-        opts['dash'].start_program
+        protect_reconnect_run(opts) do
+          opts['dash'].load_program(a[a.size - 2])
+          opts['dash'].start_program
+        end
       end
     }
     # TCP ObjectType
@@ -83,27 +101,39 @@ Daemonite.new do
         end
       }
       r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
-        p 'selected' if opts['dash'].load_program(program)
+        protect_reconnect_run(opts) do
+          p 'selected' if opts['dash'].load_program(program)
+        end  
       end
       r.add_method :StartProgram do
-        nil unless opts['dash'].start_program
+        protect_reconnect_run(opts) do
+          nil unless opts['dash'].start_program
+        end  
       end
       r.add_method :StopProgram do
-        opts['dash'].stop_program
+        protect_reconnect_run(opts) do
+          opts['dash'].stop_program
+        end  
       end
       r.add_method :PauseProgram do
-        opts['dash'].pause_program
+        protect_reconnect_run(opts) do
+          opts['dash'].pause_program
+        end  
       end
       r.add_method :PowerOn do
         if opts['rm'].value.to_s != 'Running'
           Thread.new do
             sleep 0.5 until opts['rm'].value.to_s == 'Idle'
-            puts 'break released' if opts['dash'].break_release
+            protect_reconnect_run(opts) do
+              puts 'break released' if opts['dash'].break_release
+            end  
           end
         end
       end
       r.add_method :PowerOff do
-        opts['dash'].power_off
+        protect_reconnect_run(opts) do
+          opts['dash'].power_off
+        end  
       end
       r.add_object(:RobotMode, opts['server'].types.folder).tap{ |r|
         r.add_method :AutomaticMode do
@@ -128,7 +158,9 @@ Daemonite.new do
           opts['dash'].add_to_log(message)
         end
         r.add_method :CloseSafetyPopup do
-          opts['dash'].close_safety_popup
+          protect_reconnect_run(opts) do
+            opts['dash'].close_safety_popup
+          end  
         end
       }
     }
@@ -304,8 +336,7 @@ Daemonite.new do
   rescue Errno::ECONNREFUSED => e
     puts 'ECONNREFUSED:'
     puts e.message
-  rescue UR::Dash::Error => e
-    p 'remote'
+  rescue UR::Dash::Reconnect => e
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
     opts['mo'].value = false
   rescue => e
