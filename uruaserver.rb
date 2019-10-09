@@ -5,6 +5,8 @@ require_relative '../ur-sock/lib/ur-sock'
 # require 'ur-sock'
 require 'net/ssh'
 
+Thread.abort_on_exception=true
+
 def add_axis_concept(context, item)
   context.add_variables item, :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 end
@@ -19,6 +21,33 @@ def split_vector6_data(vector, item, nodes)
   [vector.to_s, va]
 end
 
+def start_dash(opts)
+  opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
+end
+
+def start_rtde(opts)
+  ### Loading config file
+  conf = UR::XMLConfigFile.new opts['rtde_config']
+  output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
+
+  opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
+  ### Set Speed to very slow
+  if opts['rtde_config_recipe_speed']
+    speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
+    opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
+    opts['speed']['speed_slider_mask'] = 1
+    opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
+  end
+
+  ### Setup output
+  if not opts['rtde'].send_output_setup(output_names, output_types,10)
+    puts 'Unable to configure output'
+  end
+  if not opts['rtde'].send_start
+    puts 'Unable to start synchronization'
+  end
+end
+
 def protect_reconnect_run(opts)
   tries = 0
   begin
@@ -26,15 +55,22 @@ def protect_reconnect_run(opts)
   rescue UR::Dash::Reconnect => e
     tries += 1
     if tries < 2
-      opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
+      start_dash opts
       opts['mo'].value = false
       retry
-    end  
-  end  
+    end
+  end
 end
 
-def get_robot_programs(ssh,url)
-  ssh.exec!('ls ' + File.join(url,'*.urp') + ' 2>/dev/null').split("\n")
+def get_robot_programs(opts)
+  progs = []
+  begin
+    progs = opts['ssh'].exec!('ls ' + File.join(opts['url'],'*.urp') + ' 2>/dev/null').split("\n")
+    progs.shift if progs[0] =~ /^bash:/
+  rescue => e
+    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+  end
+  progs
 end
 
 Daemonite.new do
@@ -44,7 +80,6 @@ Daemonite.new do
     opts['dash'] = nil
     opts['rtde'] = nil
     opts['programs'] = nil
-    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
 
     # ProgramFile
     opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
@@ -103,22 +138,22 @@ Daemonite.new do
       r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
         protect_reconnect_run(opts) do
           p 'selected' if opts['dash'].load_program(program)
-        end  
+        end
       end
       r.add_method :StartProgram do
         protect_reconnect_run(opts) do
           nil unless opts['dash'].start_program
-        end  
+        end
       end
       r.add_method :StopProgram do
         protect_reconnect_run(opts) do
           opts['dash'].stop_program
-        end  
+        end
       end
       r.add_method :PauseProgram do
         protect_reconnect_run(opts) do
           opts['dash'].pause_program
-        end  
+        end
       end
       r.add_method :PowerOn do
         if opts['rm'].value.to_s != 'Running'
@@ -126,14 +161,14 @@ Daemonite.new do
             sleep 0.5 until opts['rm'].value.to_s == 'Idle'
             protect_reconnect_run(opts) do
               puts 'break released' if opts['dash'].break_release
-            end  
+            end
           end
         end
       end
       r.add_method :PowerOff do
         protect_reconnect_run(opts) do
           opts['dash'].power_off
-        end  
+        end
       end
       r.add_object(:RobotMode, opts['server'].types.folder).tap{ |r|
         r.add_method :AutomaticMode do
@@ -160,7 +195,7 @@ Daemonite.new do
         r.add_method :CloseSafetyPopup do
           protect_reconnect_run(opts) do
             opts['dash'].close_safety_popup
-          end  
+          end
         end
       }
     }
@@ -218,47 +253,22 @@ Daemonite.new do
     opts['af']  = aff.find :TCPForce
     opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
-    ### Loading config file
-    conf = UR::XMLConfigFile.new opts['rtde_config']
-    output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
-
     ### Connecting to universal robot
-    opts['dash'] = UR::Dash.new(opts['ipadress']).connect
-    opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
+    start_rtde opts
+    start_dash opts
 
     ### Manifest programs
     opts['programs'] = robot.find(:Programs)
-
     opts['prognodes'] = {}
-    opts['progs'] = get_robot_programs(opts['ssh'],opts['url'])
-    opts['progs'].each do |pr|
-      pr = pr[0..-5]
-      opts['prognodes'][pr] = opts['programs'].manifest(pr, opts['pf'])
-    end
-    opts['programs'].find(:Programs).value = opts['progs']
+    opts['progs'] = []
+    opts['semaphore'] = Mutex.new
     ### check if interfaces are ok
     raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
-    ### Set Speed to very slow
-    if opts['rtde_config_recipe_speed'] 
-      speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed'] 
-      opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
-      opts['speed']['speed_slider_mask'] = 1
-      # opts['ov'].value = 100
-      opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
-    end  
-
-    ### Setup output
-    if not opts['rtde'].send_output_setup(output_names, output_types,10)
-      puts 'Unable to configure output'
-    end
-    if not opts['rtde'].send_start
-      puts 'Unable to start synchronization'
-    end
-
     # functionality for threading in loop
-    opts['doit1'] = Time.now.to_i
-    opts['doit10'] = Time.now.to_i
+    opts['doit_state'] = Time.now.to_i
+    opts['doit_progs'] = Time.now.to_i
+    opts['doit_rtde'] = Time.now.to_i
   rescue => e
     puts e.message
     puts e.backtrace
@@ -268,33 +278,36 @@ Daemonite.new do
   run do |opts|
     opts['server'].run
 
-    if Time.now.to_i - 1 > opts['doit1']
-      opts['doit1'] = Time.now.to_i
+    if Time.now.to_i - 1 > opts['doit_state']
+      opts['doit_state'] = Time.now.to_i
       opts['cp'].value = opts['dash'].get_loaded_program
       opts['rs'].value = opts['dash'].get_program_state
     end
 
-    if Time.now.to_i - 10 > opts['doit10']
+    if Time.now.to_i - 10 > opts['doit_progs']
+      opts['doit_progs'] = Time.now.to_i
       Thread.new do
-        # Content of thread
-        opts['doit10'] = Time.now.to_i
-        # check every 10 seconds for new programs
-        progs = get_robot_programs(opts['ssh'],opts['url'])
-        delete = opts['progs'] - progs
-        puts 'Missing Nodes: ' + delete.to_s
-        delete.each do |d|
-          d = d[0..-5]
-          opts['prognodes'][d].delete!
-          opts['prognodes'].delete(d)
-        end
-        add = progs - opts['progs']
-        # puts 'New nodes: ' + add.to_s
-        add.each do |a|
-          a = a[0..-5]
-          opts['prognodes'][a] = opts['programs'].manifest(a, opts['pf'])
-        end
-        opts['progs'] = progs.dup
-        opts['programs'].find(:Programs).value = opts['progs']
+        opts['semaphore'].synchronize do
+          # Content of thread
+          # check every 10 seconds for new programs
+          progs = get_robot_programs(opts)
+          delete = opts['progs'] - progs
+          # puts 'Missing Nodes: ' + delete.to_s
+          delete.each do |d|
+            d = d[0..-5]
+            opts['prognodes'][d].delete!
+            opts['prognodes'].delete(d)
+          end
+          add = progs - opts['progs']
+          # puts 'New nodes: ' + add.to_s
+          add.each do |a|
+            a = a[0..-5]
+            opts['prognodes'][a] = opts['programs'].manifest(a, opts['pf'])
+          end
+          opts['progs'] = progs.dup
+          opts['programs'].find(:Programs).value = opts['progs']
+          opts['mo'].value = true
+        end unless opts['semaphore'].locked?
       end
     end
 
@@ -312,7 +325,6 @@ Daemonite.new do
       opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
       opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
       opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
-      opts['mo'].value = true
 
       # Axes object
       split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) # actual jont positions
@@ -321,15 +333,20 @@ Daemonite.new do
       split_vector6_data(data['actual_current'],opts['acur'], opts['acura']) # actual current
       opts['amom'].value = data['actual_momentum'].to_s # actual_momentum
 
-      # #TCP object
+      # TCP object
       split_vector6_data(data['actual_qd'],opts['ap'], opts['apa']) # Actual TCP Pose
       split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) # Actual TCP Speed
       split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
       # Write values
-      if opts['rtde_config_recipe_speed'] 
+      if opts['rtde_config_recipe_speed']
         opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
         opts['rtde'].send(opts['speed'])
+      end
+    else
+      if Time.now.to_i - 10 > opts['doit_rtde']
+        opts['doit_rtde'] = Time.now.to_i
+        start_rtde opts
       end
     end
 
@@ -337,9 +354,12 @@ Daemonite.new do
     puts 'ECONNREFUSED:'
     puts e.message
   rescue UR::Dash::Reconnect => e
-    opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
+    start_dash opts
     opts['mo'].value = false
   rescue => e
+    unless opts['dash']
+      start_dash opts
+    end
     p e.message
     p e.backtrace
   end
