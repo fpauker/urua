@@ -4,14 +4,15 @@ require_relative '../opcua-smart/lib/opcua/server'
 require_relative '../ur-sock/lib/ur-sock'
 # require 'ur-sock'
 require 'net/ssh'
+require 'net/scp'
 
 Thread.abort_on_exception=true
 
-def add_axis_concept(context, item)
+def add_axis_concept(context, item) #{{{
   context.add_variables item, :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
-end
+end #}}}
 
-def split_vector6_data(vector, item, nodes)
+def split_vector6_data(vector, item, nodes) #{{{
   # aqd = data['actual_qd'].to_s
   item.value = vector.to_s
   va = vector.to_s[1..-2].split(',')
@@ -19,13 +20,13 @@ def split_vector6_data(vector, item, nodes)
     a.value = vector[i].to_f
   end
   [vector.to_s, va]
-end
+end #}}}
 
-def start_dash(opts)
+def start_dash(opts) #{{{
   opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
-end
+end #}}}
 
-def start_rtde(opts)
+def start_rtde(opts) #{{{
   ### Loading config file
   conf = UR::XMLConfigFile.new opts['rtde_config']
   output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
@@ -46,9 +47,9 @@ def start_rtde(opts)
   if not opts['rtde'].send_start
     puts 'Unable to start synchronization'
   end
-end
+end #}}}
 
-def protect_reconnect_run(opts)
+def protect_reconnect_run(opts) #{{{
   tries = 0
   begin
     yield
@@ -60,6 +61,32 @@ def protect_reconnect_run(opts)
       retry
     end
   end
+end #}}}
+
+def ssh_start(opts)
+  opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+end
+
+def download_program(opts,name)
+  counter = 0
+  begin
+    opts['ssh'].scp.download File.join(opts['url'],name)
+  rescue => e
+    counter += 1
+    ssh_start opts
+    retry if counter < 3
+  end
+end
+def upload_program(opts,name,program)
+  counter = 0
+  begin
+    opts['ssh'].scp.upload StringIO.new(program), File.join(opts['url'],name)
+  rescue => e
+    counter += 1
+    ssh_start opts
+    retry if counter < 3
+  end
+  nil
 end
 
 def get_robot_programs(opts)
@@ -68,7 +95,7 @@ def get_robot_programs(opts)
     progs = opts['ssh'].exec!('ls ' + File.join(opts['url'],'*.urp') + ' 2>/dev/null').split("\n")
     progs.shift if progs[0] =~ /^bash:/
   rescue => e
-    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+    ssh_start opts
   end
   progs
 end
@@ -125,19 +152,16 @@ Daemonite.new do
         p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
         p.add_variable :Programs
         opts['file'] = p.add_variable :File
-        p.add_method :Refresh do
-          # tbd
+        p.add_method :UploadProgram, name: OPCUA::TYPES::STRING, program: OPCUA::TYPES::STRING do |node, name, program|
+          upload_program opts, name, program
         end
-        p.add_method :SendToServer, program: OPCUA::TYPES::STRING do |node, program|
-          # tbd
-        end
-        p.add_method :ReceiveFromServer, program: OPCUA::TYPES::STRING do |node,name|
-          # tbd
+        p.add_method :DownloadProgram, name: OPCUA::TYPES::STRING do |node,name|
+          download_program opts, name
         end
       }
-      r.add_method :SelectProgram, program: OPCUA::TYPES::STRING do |node, program|
+      r.add_method :SelectProgram, name: OPCUA::TYPES::STRING do |node, name|
         protect_reconnect_run(opts) do
-          p 'selected' if opts['dash'].load_program(program)
+          opts['dash'].load_program(name)
         end
       end
       r.add_method :StartProgram do
