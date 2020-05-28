@@ -292,11 +292,14 @@ Daemonite.new do
     ### check if interfaces are ok
     raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
 
-    # functionality for threading in loop
+    # Functionality for threading in loop
     opts['doit_state'] = Time.now.to_i
     opts['doit_progs'] = Time.now.to_i
     opts['doit_rtde'] = Time.now.to_i
 
+    # Serious comment (we do the obvious stuff)
+    opts['sn'].value = opts['dash'].get_serial_number
+    opts['model'].value = opts['dash'].get_robot_model
   rescue => e
     puts e.message
     puts e.backtrace
