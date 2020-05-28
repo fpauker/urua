@@ -57,7 +57,6 @@ def protect_reconnect_run(opts) #{{{
     tries += 1
     if tries < 2
       start_dash opts
-      opts['mo'].value = false
       retry
     end
   end
@@ -141,6 +140,7 @@ Daemonite.new do
 
     # RobotObjectType
     rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
+      r.add_variables :SerialNumber, :RobotModel
       r.add_object(:State, opts['server'].types.folder).tap{ |s|
         s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote
         s.add_variable_rw :Override
@@ -227,6 +227,9 @@ Daemonite.new do
     ### Robot object
     robot = opts['server'].objects.manifest(:UR10e, rt)
 
+    opts['sn'] = robot.find(:SerialNumber)
+    opts['model'] = robot.find(:RobotModel)
+
     ### SafetyBoard
     sb = robot.find(:SafetyBoard)
     opts['mv'] = sb.find(:MainVoltage)
@@ -293,6 +296,7 @@ Daemonite.new do
     opts['doit_state'] = Time.now.to_i
     opts['doit_progs'] = Time.now.to_i
     opts['doit_rtde'] = Time.now.to_i
+
   rescue => e
     puts e.message
     puts e.backtrace
@@ -306,6 +310,8 @@ Daemonite.new do
       opts['doit_state'] = Time.now.to_i
       opts['cp'].value = opts['dash'].get_loaded_program
       opts['rs'].value = opts['dash'].get_program_state
+      # update remote control state from dashboard server
+      opts['mo'].value = opts['dash'].is_in_remote_control
     end
 
     if Time.now.to_i - 10 > opts['doit_progs']
@@ -330,7 +336,7 @@ Daemonite.new do
           end
           opts['progs'] = progs.dup
           opts['programs'].find(:Programs).value = opts['progs']
-          opts['mo'].value = true
+
         end unless opts['semaphore'].locked?
       end
     end
@@ -349,7 +355,6 @@ Daemonite.new do
       opts['jm'].value = UR::Rtde::JOINTMODE[data['joint_mode']]
       opts['tm'].value = UR::Rtde::TOOLMODE[data['tool_mode']]
       opts['ps'].value = UR::Rtde::PROGRAMSTATE[data['runtime_state']]
-
       # Axes object
       split_vector6_data(data['actual_q'],opts['aap'], opts['aapa']) # actual jont positions
       split_vector6_data(data['actual_qd'],opts['avel'], opts['avela']) # actual joint velocities
@@ -379,7 +384,6 @@ Daemonite.new do
     puts e.message
   rescue UR::Dash::Reconnect => e
     start_dash opts
-    opts['mo'].value = false
   rescue => e
     unless opts['dash']
       start_dash opts
