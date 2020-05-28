@@ -112,13 +112,13 @@ Daemonite.new do
       p.add_method :SelectProgram do |node|
         a = node.id.to_s.split('/')
         protect_reconnect_run(opts) do
-          opts['dash'].load_program(a[a.size - 2])
+          opts['dash'].load_program(a[-2])
         end
       end
       p.add_method :StartProgram do |node|
         a = node.id.to_s.split('/')
         protect_reconnect_run(opts) do
-          opts['dash'].load_program(a[a.size - 2])
+          opts['dash'].load_program(a[-2])
           opts['dash'].start_program
         end
       end
@@ -155,7 +155,7 @@ Daemonite.new do
         p.add_method :UploadProgram, name: OPCUA::TYPES::STRING, program: OPCUA::TYPES::STRING do |node, name, program|
           upload_program opts, name, program
         end
-        p.add_method :DownloadProgram, name: OPCUA::TYPES::STRING do |node,name|
+        p.add_method :DownloadProgram, name: OPCUA::TYPES::STRING, return:  OPCUA::TYPES::STRING do |node,name|
           download_program opts, name
         end
       }
