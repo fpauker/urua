@@ -1,0 +1,50 @@
+#!/usr/bin/ruby
+curpath = __dir__
+require 'rubygems'
+require 'optparse'
+require 'fileutils'
+require 'webrick'
+require 'typhoeus'
+require 'xml/smart'
+require 'zip'
+require 'pp'
+
+def wrap(s, width=78, indent=18)
+  lines = []
+  line, s = s[0..indent-2], s[indent..-1]
+  s.split(/\n/).each do |ss|
+    ss.split(/[ \t]+/).each do |word|
+      if line.size + word.size >= width
+        lines << line
+        line = (" " * (indent)) + word
+      else
+        line << " " << word
+      end
+    end
+    lines << line if line
+    line = (" " * (indent-1))
+  end
+  return lines.join "\n"
+end
+
+ARGV.options { |opt|
+  opt.summary_width = 15
+  opt.summary_indent = '  '
+  opt.banner = "Usage:\n#{opt.summary_indent}#{File.basename($0)}\n"
+  opt.on("Options:")
+  opt.on("--help", "-h","This text.") { puts opt; exit }
+  opt.on("")
+  opt.on(wrap("[scaffold]        scaffold a server. The executable is always copied, default config are only created when they dont exists.",78,18))
+  opt.parse!
+}
+if (ARGV.length == 0) ||
+   (ARGV.length == 1  && ARGV[0] != 'scaffold')
+  puts ARGV.options
+  exit
+end
+command = ARGV[0]
+cockpit = "#{curpath}/../cockpit/"
+
+if command == 'scaffold'
+
+end
