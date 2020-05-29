@@ -18,10 +18,10 @@ gem install ur-sock
 
 ## Adress space
 
-![Architecture](./adressspace/ur1.png?raw=true | width=50)
-![Architecture](./adressspace/ur2.png?raw=true | width=50)
-![Architecture](./adressspace/ur3.png?raw=true | width=50)
-![Architecture](./adressspace/ur5.png?raw=true | width=50)
+![Architecture](adressspace/ur1.png?raw=true | width=50)
+![Architecture](adressspace/ur2.png?raw=true | width=50)
+![Architecture](adressspace/ur3.png?raw=true | width=50)
+![Architecture](adressspace/ur5.png?raw=true | width=50)
 
 ## Contributing
 
@@ -40,7 +40,7 @@ See also the list of [contributors](https://intra.acdp.at/gogs/fpauker/ua4ur/con
 
 ## License
 
-This project is licensed under the GPL3 License - see the [LICENSE.md](LICENSE) file for details
+This project is licensed under the GPL3 License - see the [LICENSE.md](./LICENSE) file for details
 
 ## Acknowledgments
 
