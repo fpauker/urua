@@ -1,4 +1,5 @@
-# UA4UR
+# URUA 
+<img align="right" height="100" src="https://github.com/fpauker/urua/blob/master/logo/urua_logo.png">
 
 OPC UA Server for Universal Robots
 
