@@ -40,7 +40,7 @@ See also the list of [contributors](https://intra.acdp.at/gogs/fpauker/ua4ur/con
 
 ## License
 
-This project is licensed under the GPL3 License - see the [LICENSE.md](LICENSE.md) file for details
+This project is licensed under the GPL3 License - see the [LICENSE.md](LICENSE) file for details
 
 ## Acknowledgments
 
