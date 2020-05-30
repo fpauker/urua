@@ -41,10 +41,10 @@ command = ARGV[0]
 
 if command == 'scaffold'
   dir = File.join(__dir__,'..','server')
-  FileUtils.cp(File.join(dir,'uruaserver.rb'),__dir__)
+  FileUtils.cp(File.join(dir,'uruaserver.rb'),'.')
   Dir[File.join(dir,'*')].each do |f|
     unless File.exist?(File.join(__dir__,File.basename(f)))
-      FileUtils.cp(f,__dir__)
+      FileUtils.cp(f,'.')
     end
   end
 end

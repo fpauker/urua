@@ -7,7 +7,7 @@ Gem::Specification.new do |s|
 
   s.description      = "see https://github.com/fpauker/urua"
 
-  s.files            = Dir['{lib/**/*.rb,contrib/logo*}'] + %w(LICENSE Rakefile README.md AUTHORS)
+  s.files            = Dir['{lib/**/*.rb,lib/**/*.conf,tools/**/*.rb,server/**/*}'] + %w(LICENSE Rakefile README.md AUTHORS)
   s.require_path     = 'lib'
   s.extra_rdoc_files = ['README.md']
   s.bindir           = 'tools'
@@ -24,5 +24,5 @@ Gem::Specification.new do |s|
   s.homepage         = 'http://cpee.org/'
 
   s.add_runtime_dependency 'opcua', '~>0.18'
-  s.add_runtime_dependency 'ur-sock', '~>1.0'
+  s.add_runtime_dependency 'ur-sock', '>=0.4444'
 end
