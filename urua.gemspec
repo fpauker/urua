@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name             = "urua"
-  s.version          = "0.99.4444"
+  s.version          = "0.99.4445"
   s.platform         = Gem::Platform::RUBY
   s.license          = "GPL-3.0"
   s.summary          = "Universal Robot (UR) OPC UA Server."
