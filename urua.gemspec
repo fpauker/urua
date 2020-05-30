@@ -1,11 +1,11 @@
 Gem::Specification.new do |s|
   s.name             = "urua"
-  s.version          = "0.99.4445"
+  s.version          = "0.99.4447"
   s.platform         = Gem::Platform::RUBY
   s.license          = "GPL-3.0"
-  s.summary          = "Universal Robot (UR) OPC UA Server."
+  s.summary          = "OPC UA Server for Universal Robots"
 
-  s.description      = "see https://github.com/fpauker/urua"
+  s.description      = "OPC UA Server for Universal Robots. See https://github.com/fpauker/urua"
 
   s.files            = Dir['{lib/**/*.rb,lib/**/*.conf,tools/**/*.rb,server/**/*}'] + %w(LICENSE Rakefile README.md AUTHORS)
   s.require_path     = 'lib'
@@ -19,9 +19,6 @@ Gem::Specification.new do |s|
 
   s.email            = 'florian.pauker@gmail.com'
   s.homepage         = 'https://github.com/fpauker/urua'
-
-  s.email            = 'juergen.mangler@gmail.com'
-  s.homepage         = 'http://cpee.org/'
 
   s.add_runtime_dependency 'opcua', '~>0.18'
   s.add_runtime_dependency 'ur-sock', '>=0.4444'
