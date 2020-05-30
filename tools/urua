@@ -1,12 +1,7 @@
 #!/usr/bin/ruby
-curpath = __dir__
 require 'rubygems'
 require 'optparse'
 require 'fileutils'
-require 'webrick'
-require 'typhoeus'
-require 'xml/smart'
-require 'zip'
 require 'pp'
 
 def wrap(s, width=78, indent=18)
@@ -43,8 +38,13 @@ if (ARGV.length == 0) ||
   exit
 end
 command = ARGV[0]
-cockpit = "#{curpath}/../cockpit/"
 
 if command == 'scaffold'
-
+  dir = File.join(__dir__,'..','server')
+  FileUtils.cp(File.join(dir,'uruaserver.rb'),__dir__)
+  Dir[File.join(dir,'*')].each do |f|
+    unless File.exist?(File.join(__dir__,File.basename(f)))
+      FileUtils.cp(f,__dir__)
+    end
+  end
 end
