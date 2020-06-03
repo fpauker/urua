@@ -1,6 +1,10 @@
 require 'daemonite'
 require 'opcua/server'
-require 'ur-sock'
+if $dev
+  require_relative '../../ur-sock/lib/ur-sock'
+else
+  require 'ur-sock'
+end
 require 'net/ssh'
 require 'net/scp'
 
