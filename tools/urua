@@ -43,7 +43,7 @@ if command == 'scaffold'
   dir = File.join(__dir__,'..','server')
   FileUtils.cp(File.join(dir,'uruaserver.rb'),'.')
   Dir[File.join(dir,'*')].each do |f|
-    unless File.exist?(File.join(__dir__,File.basename(f)))
+    unless File.exist?(File.join(__dir__,File.basename(f))) || f =~ /\/dev/
       FileUtils.cp(f,'.')
     end
   end

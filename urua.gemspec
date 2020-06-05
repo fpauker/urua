@@ -1,13 +1,13 @@
 Gem::Specification.new do |s|
   s.name             = "urua"
-  s.version          = "0.99.5000"
+  s.version          = "0.99.5001"
   s.platform         = Gem::Platform::RUBY
   s.license          = "GPL-3.0"
   s.summary          = "OPC UA Server for Universal Robots"
 
   s.description      = "OPC UA Server for Universal Robots. See https://github.com/fpauker/urua"
 
-  s.files            = Dir['{lib/**/*.rb,lib/**/*.conf,tools/**/*.rb,server/**/*}'] + %w(LICENSE Rakefile README.md AUTHORS)
+  s.files            = Dir['{lib/**/*.rb,lib/**/*.xml,lib/**/*.conf,tools/**/*.rb,server/**/*}'] + %w(LICENSE Rakefile README.md AUTHORS)
   s.require_path     = 'lib'
   s.extra_rdoc_files = ['README.md']
   s.bindir           = 'tools'
