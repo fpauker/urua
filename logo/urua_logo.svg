@@ -7,43 +7,46 @@
    xmlns="http://www.w3.org/2000/svg"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-   sodipodi:docname="urua_logo.svg"
-   inkscape:version="1.0beta2 (unknown)"
-   id="svg8"
-   version="1.1"
-   viewBox="0 0 101.83751 54.684437"
+   inkscape:export-ydpi="200"
+   inkscape:export-xdpi="200"
+   inkscape:export-filename="/home/fpauker/projects/urua/logo/urua_logo.png"
+   width="101.83751mm"
    height="54.684437mm"
-   width="101.83751mm">
+   viewBox="0 0 101.83751 54.684437"
+   version="1.1"
+   id="svg8"
+   inkscape:version="1.0beta2 (unknown)"
+   sodipodi:docname="urua_logo.svg">
   <defs
      id="defs2" />
   <sodipodi:namedview
-     inkscape:window-maximized="1"
-     inkscape:window-y="27"
-     inkscape:window-x="0"
-     inkscape:window-height="1136"
-     inkscape:window-width="1734"
-     fit-margin-bottom="0"
-     fit-margin-right="0"
-     fit-margin-left="0"
-     fit-margin-top="0"
-     showgrid="true"
-     inkscape:document-rotation="0"
-     inkscape:current-layer="layer1"
-     inkscape:document-units="mm"
-     inkscape:cy="202.49385"
-     inkscape:cx="234.77864"
-     inkscape:zoom="1.4"
-     inkscape:pageshadow="2"
-     inkscape:pageopacity="0.0"
-     borderopacity="1.0"
-     bordercolor="#666666"
+     id="base"
      pagecolor="#ffffff"
-     id="base">
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.4"
+     inkscape:cx="234.77864"
+     inkscape:cy="202.49385"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     inkscape:document-rotation="0"
+     showgrid="true"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:window-width="1734"
+     inkscape:window-height="1136"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1">
     <inkscape:grid
-       originy="-34.395829"
-       originx="-85.870829"
+       type="xygrid"
        id="grid849"
-       type="xygrid" />
+       originx="-85.870829"
+       originy="-34.395829" />
   </sodipodi:namedview>
   <metadata
      id="metadata5">
@@ -53,33 +56,33 @@
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-        <dc:title></dc:title>
+        <dc:title />
       </cc:Work>
     </rdf:RDF>
   </metadata>
   <g
-     transform="translate(-85.870831,-34.395829)"
-     id="layer1"
+     inkscape:label="Layer 1"
      inkscape:groupmode="layer"
-     inkscape:label="Layer 1">
+     id="layer1"
+     transform="translate(-85.870831,-34.395829)">
     <path
-       inkscape:connector-curvature="0"
-       id="path851"
+       style="fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
        d="M 88.370831,34.395833 V 82.020832 H 109.53749 V 44.979166 h 23.8125 l -13.22917,23.8125 18.52083,18.520833"
-       style="fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+       id="path851"
+       inkscape:connector-curvature="0" />
     <g
        id="g1288">
       <path
-         inkscape:connector-curvature="0"
-         id="path851-3"
-         d="m 140.22917,34.395829 v 47.625004 h 21.16666 v -37.04167 h 23.81251 l -1e-5,23.812504 v 13.229166"
+         sodipodi:nodetypes="ccccccc"
          style="fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         sodipodi:nodetypes="ccccccc" />
-      <path
-         style="fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-         d="m 161.39583,63.499999 h 23.8125"
-         id="path868"
+         d="m 140.22917,34.395829 v 47.625004 h 21.16666 v -37.04167 h 23.81251 l -1e-5,23.812504 v 13.229166"
+         id="path851-3"
          inkscape:connector-curvature="0" />
+      <path
+         inkscape:connector-curvature="0"
+         id="path868"
+         d="m 161.39583,63.499999 h 23.8125"
+         style="fill:none;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
     </g>
   </g>
 </svg>

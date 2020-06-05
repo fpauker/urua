@@ -1,6 +1,7 @@
 require 'daemonite'
 require 'opcua/server'
-require 'ur-sock'
+require_relative '../../ur-sock/lib/ur-sock'
+#require 'ur-sock'
 require 'net/ssh'
 require 'net/scp'
 
@@ -28,8 +29,8 @@ module URUA
     ### Loading config file
     conf = UR::XMLConfigFile.new opts['rtde_config']
     output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
-
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
+
     ### Set Speed to very slow
     if opts['rtde_config_recipe_speed']
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
@@ -145,7 +146,7 @@ module URUA
         rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
           r.add_variables :SerialNumber, :RobotModel
           r.add_object(:State, opts['server'].types.folder).tap{ |s|
-            s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote
+            s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote, :OperationalMode
             s.add_variable_rw :Override
           }
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
@@ -251,6 +252,7 @@ module URUA
         opts['ov'] = st.find(:Override)
         opts['ss'] = st.find(:SpeedScaling)
         opts['mo'] = st.find(:Remote)
+        opts['op'] = st.find(:OperationalMode)
 
         ### Axes
         axes = robot.manifest(:Axes, ax)
@@ -322,6 +324,7 @@ module URUA
           opts['rs'].value = opts['dash'].get_program_state
           # update remote control state from dashboard server
           opts['mo'].value = opts['dash'].is_in_remote_control
+          opts['op'].value = opts['dash'].get_operational_mode
         end
 
         if Time.now.to_i - 10 > opts['doit_progs']
