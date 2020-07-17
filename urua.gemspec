@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name             = "urua"
-  s.version          = "0.99.5001"
+  s.version          = "0.99.5002"
   s.platform         = Gem::Platform::RUBY
   s.license          = "GPL-3.0"
   s.summary          = "OPC UA Server for Universal Robots"
@@ -23,4 +23,5 @@ Gem::Specification.new do |s|
   s.add_runtime_dependency 'opcua', '~>0.18'
   s.add_runtime_dependency 'ur-sock', '>=1.0'
   s.add_runtime_dependency 'daemonite', '~>0.5'
+  s.add_runtime_dependency 'net-scp', '~>3.0'
 end
