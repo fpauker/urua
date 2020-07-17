@@ -21,7 +21,7 @@ Gem::Specification.new do |s|
   s.homepage         = 'https://github.com/fpauker/urua'
 
   s.add_runtime_dependency 'opcua', '~>0.18'
-  s.add_runtime_dependency 'ur-sock', '>=1.0'
+  s.add_runtime_dependency 'ur-sock', '~>1.0'
   s.add_runtime_dependency 'daemonite', '~>0.5'
   s.add_runtime_dependency 'net-scp', '~>3.0'
 end
