@@ -28,6 +28,10 @@ module URUA
     opts['dash'] = UR::Dash.new(opts['ipadress']).connect rescue nil
   end #}}}
 
+  def self::start_psi(opts)
+    opts['dash'] = UR::Psi.new(opts['ipadress']).connect rescue nil
+  end
+
   def self::start_rtde(opts) #{{{
     ### Loading config file
     conf = UR::XMLConfigFile.new opts['rtde_config']
