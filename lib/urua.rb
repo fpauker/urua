@@ -29,7 +29,7 @@ module URUA
   end #}}}
 
   def self::start_psi(opts)
-    opts['dash'] = UR::Psi.new(opts['ipadress']).connect rescue nil
+    opts['psi'] = UR::Psi.new(opts['ipadress']).connect rescue nil
   end
 
   def self::start_rtde(opts) #{{{
@@ -75,7 +75,7 @@ module URUA
   def self::download_program(opts,name) #{{{
     counter = 0
     begin
-      opts['ssh'].scp.download File.join(opts['url'],name)
+      opts['ssh'].scp.download! File.join(opts['url'],name)
     rescue => e
       counter += 1
       URUA::ssh_start opts
@@ -106,6 +106,10 @@ module URUA
     progs
   end #}}}
 
+  def self::robotprogram_running?(opts)
+    opts['ps'].value == 'Playing'
+  end
+
   def self::implementation_startup(opts) #{{{
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
@@ -117,6 +121,7 @@ module URUA
         opts['dash'] = nil
         opts['rtde'] = nil
         opts['programs'] = nil
+        opts['psi'] = nil
 
         # ProgramFile
         opts['pf'] = opts['server'].types.add_object_type(:ProgramFile).tap{ |p|
@@ -131,6 +136,15 @@ module URUA
             URUA::protect_reconnect_run(opts) do
               opts['dash'].load_program(a[-2])
               opts['dash'].start_program
+            end
+          end
+          p.add_method :StartAsUrScript do |node|
+            unless URUA::robotprogram_running?(opts)
+              a = node.id.to_s.split('/')          
+              URUA::protect_reconnect_run(opts) do
+                File.write('temp.script', URUA::download_program(opts, a[-2]+".script"))
+                opts['psi'].execute_ur_script('temp.script')
+              end
             end
           end
         }
@@ -295,6 +309,7 @@ module URUA
         ### Connecting to universal robot
         URUA::start_rtde opts
         URUA::start_dash opts
+        URUA::start_psi opts
 
         ### Manifest programs
         opts['programs'] = robot.find(:Programs)
