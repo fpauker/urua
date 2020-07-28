@@ -132,15 +132,17 @@ module URUA
             end
           end
           p.add_method :StartProgram do |node|
-            a = node.id.to_s.split('/')
-            URUA::protect_reconnect_run(opts) do
-              opts['dash'].load_program(a[-2])
-              opts['dash'].start_program
+            unless URUA::robotprogram_running?(opts)
+              a = node.id.to_s.split('/')
+              URUA::protect_reconnect_run(opts) do
+                opts['dash'].load_program(a[-2])
+                opts['dash'].start_program
+              end
             end
           end
           p.add_method :StartAsUrScript do |node|
             unless URUA::robotprogram_running?(opts)
-              a = node.id.to_s.split('/')          
+              a = node.id.to_s.split('/')
               URUA::protect_reconnect_run(opts) do
                 File.write('temp.script', URUA::download_program(opts, a[-2]+".script"))
                 opts['psi'].execute_ur_script('temp.script')
@@ -190,8 +192,10 @@ module URUA
             end
           end
           r.add_method :StartProgram do
-            URUA::protect_reconnect_run(opts) do
-              nil unless opts['dash'].start_program
+            unless URUA::robotprogram_running?(opts)
+              URUA::protect_reconnect_run(opts) do
+                nil unless opts['dash'].start_program
+              end
             end
           end
           r.add_method :StopProgram do
@@ -419,9 +423,14 @@ module URUA
         puts e.message
       rescue UR::Dash::Reconnect => e
         URUA::start_dash opts
+      rescue UR::Psi::Reconnect => e
+        URUA::start_psi opts
       rescue => e
         unless opts['dash']
           URUA::start_dash opts
+        end
+        unless opts['psi']
+          URUA::start_psi opts
         end
         p e.message
         p e.backtrace
