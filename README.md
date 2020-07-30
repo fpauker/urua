@@ -50,11 +50,10 @@ to start the developing server.
 
 ## Adress space
 
-![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur1.png?raw=true | width=50)
-
-![Architecture](/adressspace/ur2.png?raw=true | width=50)
-![Architecture](adressspace/ur3.png?raw=true | width=50)
-![Architecture](adressspace/ur5.png?raw=true | width=50)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur1.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur2.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur3.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur5.png?raw=true)
 
 ## Contributing
 
