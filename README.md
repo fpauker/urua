@@ -29,7 +29,6 @@ After installing all packages do
 
 ```
 cd urua/server
-
 ```
 in this directory the devserver.rb and the devserver.config are located. 
 
@@ -40,7 +39,6 @@ To start the server type in the following commands:
 ```
 cd urua/server
 ./uruaserver.rb start
-# ./devserver.rb start 
 ```
 or 
 ```
