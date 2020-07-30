@@ -6,7 +6,7 @@ OPC UA Server for Universal Robots
 
 ## Getting Started
 
-A simple ruby server, which uses th ur-sock and opcua-smart library.
+A simple ruby server, which uses the ur-sock and opcua-smart library.
 
 ### Prerequisites & Intallation
 
@@ -14,9 +14,41 @@ To run the server we need the following packages:
 
 * ruby gems:
 ```
-gem install opcua
-gem install ur-sock
+gem install urua
 ```
+
+If you want to develop or extend the server, just use the following instruction
+```
+git clone https://github.com/fpauker/urua
+git clone https://github.com/fpauker/ur-sock
+git clone https://github.com/etm/opcua-smart
+```
+
+Just follow the install instructions of the 3 projects.
+After installing all packages do 
+
+```
+cd urua/server
+
+```
+in this directory the devserver.rb and the devserver.config are located. 
+
+### Starting the server
+
+To start the server type in the following commands:
+
+```
+cd urua/server
+./uruaserver.rb start
+# ./devserver.rb start 
+```
+or 
+```
+cd urua/server
+./devserver.rb start 
+```
+to start the developing server.
+
 
 ## Adress space
 
