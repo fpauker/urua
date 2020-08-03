@@ -2,7 +2,7 @@
 
 # URUA 
 
-OPC UA Server for Universal Robots
+A simple OPC UA server for Universal robots in ruby, which uses the ur-sock and opcua-smart library.
 
 ## Getting Started
 
@@ -52,10 +52,18 @@ to start the developing server.
 
 ## Adress space
 
+The server's adress space is shown in the pictures below. 
+
 ![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur1.png?raw=true)
 ![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur2.png?raw=true)
 ![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur3.png?raw=true)
 ![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur5.png?raw=true)
+
+It offers several features combining 3 different interfaces of the Universal robot. It uses the 
+
+* Primary Secondary Interface for direct execution of UR scripts
+* Dashboard server for orchestration functions e.g. starting/stopping a program
+* RTDE interface for getting the robot states
 
 ## Contributing
 
