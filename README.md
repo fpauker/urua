@@ -10,9 +10,11 @@ A simple ruby server, which uses the ur-sock and opcua-smart library.
 
 ### Prerequisites & Intallation
 
-To run the server we need the following packages:
+For this server the OPC UA installation of the opcua-smart gem is required. 
+Please follow the instructions at https://github.com/etm/opcua-smart and install the opcua gem.
 
-* ruby gems:
+Additionally you have to install the URUA gem with:
+
 ```
 gem install urua
 ```
