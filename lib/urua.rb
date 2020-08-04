@@ -254,7 +254,7 @@ module URUA
         }
         ### populating the adress space
         ### Robot object
-        robot = opts['server'].objects.manifest(:UR10e, rt)
+        robot = opts['server'].objects.manifest(File.basename(opts['namespace']), rt)
 
         opts['sn'] = robot.find(:SerialNumber)
         opts['model'] = robot.find(:RobotModel)
