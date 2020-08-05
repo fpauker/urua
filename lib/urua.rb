@@ -69,7 +69,11 @@ module URUA
   end #}}}
 
   def self::ssh_start(opts) #{{{
-    opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+    if opts['certificate']
+      opts['ssh'] = Net::SSH.start(opts['ipadress'], opts['username'], :keys => [ opts['certificate'] ])
+    else
+      opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+    end
   end #}}}
 
   def self::download_program(opts,name) #{{{
