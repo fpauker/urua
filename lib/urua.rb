@@ -148,8 +148,7 @@ module URUA
             unless URUA::robotprogram_running?(opts)
               a = node.id.to_s.split('/')
               URUA::protect_reconnect_run(opts) do
-                File.write('temp.script', URUA::download_program(opts, a[-2]+".script"))
-                opts['psi'].execute_ur_script('temp.script')
+                opts['psi'].execute_ur_script(URUA::download_program(opts, a[-2]+".script"))
               end
             end
           end
@@ -210,6 +209,13 @@ module URUA
           r.add_method :PauseProgram do
             URUA::protect_reconnect_run(opts) do
               opts['dash'].pause_program
+            end
+          end
+          r.add_method :RunUrScript, content: OPCUA::TYPES::STRING do |node, content|
+            unless URUA::robotprogram_running?(opts)
+              URUA::protect_reconnect_run(opts) do
+                opts['psi'].execute_ur_script(content)
+              end
             end
           end
           r.add_method :PowerOn do
