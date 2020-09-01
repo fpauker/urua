@@ -2,28 +2,68 @@
 
 # URUA 
 
-OPC UA Server for Universal Robots
+A simple OPC UA server for Universal robots in ruby, which uses the ur-sock and opcua-smart library.
 
 ## Getting Started
 
-A simple ruby server, which uses th ur-sock and opcua-smart library.
+A simple ruby server, which uses the ur-sock and opcua-smart library.
 
 ### Prerequisites & Intallation
 
-To run the server we need the following packages:
+For this server the OPC UA installation of the opcua-smart gem is required. 
+Please follow the instructions at https://github.com/etm/opcua-smart and install the opcua gem.
 
-* ruby gems:
+Additionally you have to install the URUA gem with:
+
 ```
-gem install opcua
-gem install ur-sock
+gem install urua
 ```
+
+If you want to develop or extend the server, just use the following instruction
+```
+git clone https://github.com/fpauker/urua
+git clone https://github.com/fpauker/ur-sock
+git clone https://github.com/etm/opcua-smart
+```
+
+Just follow the install instructions of the 3 projects.
+After installing all packages do 
+
+```
+cd urua/server
+```
+in this directory the devserver.rb and the devserver.config are located. 
+
+### Starting the server
+
+To start the server type in the following commands:
+
+```
+cd urua/server
+./uruaserver.rb start
+```
+or 
+```
+cd urua/server
+./devserver.rb start 
+```
+to start the developing server.
+
 
 ## Adress space
 
-![Architecture](adressspace/ur1.png?raw=true | width=50)
-![Architecture](adressspace/ur2.png?raw=true | width=50)
-![Architecture](adressspace/ur3.png?raw=true | width=50)
-![Architecture](adressspace/ur5.png?raw=true | width=50)
+The server's adress space is shown in the pictures below. 
+
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur1.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur2.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur3.png?raw=true)
+![Architecture](https://github.com/fpauker/urua/blob/master/adressspace/ur5.png?raw=true)
+
+It offers several features combining 3 different interfaces of the Universal robot. It uses the 
+
+* Primary Secondary Interface for direct execution of UR scripts
+* Dashboard server for orchestration functions e.g. starting/stopping a program
+* RTDE interface for getting the robot states
 
 ## Contributing
 
