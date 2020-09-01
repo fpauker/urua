@@ -38,7 +38,7 @@ module URUA
     output_names, output_types = conf.get_recipe opts['rtde_config_recipe_base']
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
-    ### Set Speed to very slow
+    ### Set Speed
     if opts['rtde_config_recipe_speed']
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
@@ -60,9 +60,17 @@ module URUA
     begin
       yield
     rescue UR::Dash::Reconnect => e
+      puts e.message
       tries += 1
       if tries < 2
         URUA::start_dash opts
+        retry
+      end
+    rescue UR::Psi::Reconnect => e
+      puts e.message
+      tries += 1
+      if tries < 2
+        URUA::start_psi opts
         retry
       end
     end
@@ -117,6 +125,7 @@ module URUA
   def self::implementation_startup(opts) #{{{
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
+    opts['rtde_config_recipe_speed'] ||= 'speed'
 
     Proc.new do
       on startup do |opts|
@@ -331,7 +340,7 @@ module URUA
         opts['progs'] = []
         opts['semaphore'] = Mutex.new
         ### check if interfaces are ok
-        raise if !opts['dash'] || !opts['rtde'] ##### TODO, don't return, raise
+        raise if !opts['dash'] || !opts['rtde'] || !opts['psi']
 
         # Functionality for threading in loop
         opts['doit_state'] = Time.now.to_i
@@ -341,6 +350,17 @@ module URUA
         # Serious comment (we do the obvious stuff)
         opts['sn'].value = opts['dash'].get_serial_number
         opts['model'].value = opts['dash'].get_robot_model
+      rescue Errno::ECONNREFUSED => e
+        print 'ECONNREFUSED: '
+        puts e.message
+      rescue UR::Dash::Reconnect => e
+        URUA::start_dash opts
+        puts e.message
+        puts e.backtrace
+      rescue UR::Psi::Reconnect => e
+        URUA::start_psi opts
+        puts e.message
+        puts e.backtrace
       rescue => e
         puts e.message
         puts e.backtrace
@@ -371,14 +391,12 @@ module URUA
               # check every 10 seconds for new programs
               progs = URUA::get_robot_programs(opts)
               delete = opts['progs'] - progs
-              # puts 'Missing Nodes: ' + delete.to_s
               delete.each do |d|
                 d = d[0..-5]
                 opts['prognodes'][d].delete!
                 opts['prognodes'].delete(d)
               end
               add = progs - opts['progs']
-              # puts 'New nodes: ' + add.to_s
               add.each do |a|
                 a = a[0..-5]
                 opts['prognodes'][a] = opts['programs'].manifest(a, opts['pf'])
@@ -416,10 +434,14 @@ module URUA
           URUA::split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) # Actual TCP Speed
           URUA::split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
+          ######TODO Fix Write Values that opc ua does not overwrite the speed slider mask of manual changes
           # Write values
           if opts['rtde_config_recipe_speed']
-            opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
-            opts['rtde'].send(opts['speed'])
+            #if opts['ov'] != opts['ovold']
+            #  if opts['ov'] == data['target_speed_fraction']
+            #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
+            #opts['rtde'].send(opts['speed'])
+            opts['ovold'] = data['target_speed_fraction']
           end
         else
           if Time.now.to_i - 10 > opts['doit_rtde']
@@ -427,23 +449,21 @@ module URUA
             URUA::start_rtde opts
           end
         end
-
       rescue Errno::ECONNREFUSED => e
-        puts 'ECONNREFUSED:'
+        print 'ECONNREFUSED: '
         puts e.message
       rescue UR::Dash::Reconnect => e
         URUA::start_dash opts
+        puts e.message
+        puts e.backtrace
       rescue UR::Psi::Reconnect => e
         URUA::start_psi opts
+        puts e.message
+        puts e.backtrace
       rescue => e
-        unless opts['dash']
-          URUA::start_dash opts
-        end
-        unless opts['psi']
-          URUA::start_psi opts
-        end
-        p e.message
-        p e.backtrace
+        puts e.message
+        puts e.backtrace
+        raise
       end
     end
   end #}}}
