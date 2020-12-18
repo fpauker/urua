@@ -4,8 +4,9 @@
 		<field name="speed_slider_mask" type="UINT32"/>
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
-  <recipe key="regread">
+  <recipe key="regwrite">
     <field name="output_int_register_0" type="INT32"/>
+    <field name="input_int_register_0" type="INT32"/>
   </recipe>
   <recipe key="out">
     <field name="timestamp" type="DOUBLE"/>
@@ -39,6 +40,7 @@
     <field name="actual_joint_voltage" type="VECTOR6D"/>
     <field name="actual_digital_output_bits" type="UINT64"/>
     <field name="runtime_state" type="UINT32"/>
+    <field name="output_int_register_0" type="INT32"/>
 
     <!-- field name="output_bit_registers0_to_31" type="UINT32"/-->
     <!-- field name="output_bit_registers32_to_63" type="UINT32"/-->

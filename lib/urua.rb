@@ -46,6 +46,13 @@ module URUA
       opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
     end
 
+    ### Set register
+    if opts['rtde_config_recipe_regwrite']
+      regwrite_names, regwrite_types = conf.get_recipe opts['rtde_config_recipe_regwrite']
+      opts['reg'] = opts['rtde'].send_input_setup(regwrite_names,regwrite_types)
+      opts['output_int_register_0'].value = opts['reg']['output_int_register_0']
+    end
+
     ### Setup output
     if not opts['rtde'].send_output_setup(output_names, output_types,10)
       puts 'Unable to configure output'
@@ -186,6 +193,9 @@ module URUA
           }
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
+          }
+          r.add_object(:Register, opts['server'].types.folder).tap{ |r|
+            r.add_variable_rw :Output_int_register_0
           }
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
@@ -329,6 +339,9 @@ module URUA
         opts['af']  = aff.find :TCPForce
         opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
+        opts['regfol'] = robot.find :Register
+        opts['regouti0'] = opts['regfol'].find :Output_int_register_0
+
         ### Connecting to universal robot
         URUA::start_rtde opts
         URUA::start_dash opts
@@ -415,6 +428,9 @@ module URUA
           opts['rv'].value = data['actual_robot_voltage']
           opts['rc'].value = data['actual_robot_current']
           opts['ss'].value = data['speed_scaling']
+
+          #register
+          opts['regouti0'].value = data['output_int_register_0']
 
           # State objects
           opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
