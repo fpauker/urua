@@ -4,7 +4,9 @@
 		<field name="speed_slider_mask" type="UINT32"/>
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
-
+  <recipe key="regread">
+    <field name="output_int_register_0" type="INT32"/>
+  </recipe>
   <recipe key="out">
     <field name="timestamp" type="DOUBLE"/>
     <field name="target_q" type="VECTOR6D"/>
