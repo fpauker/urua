@@ -339,6 +339,7 @@ module URUA
         opts['af']  = aff.find :TCPForce
         opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
+        ### Register
         opts['regfol'] = robot.find :Register
         opts['regouti0'] = opts['regfol'].find :Output_int_register_0
 
