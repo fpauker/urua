@@ -5,7 +5,6 @@
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
   <recipe key="regwrite">
-    <field name="output_int_register_0" type="INT32"/>
     <field name="input_int_register_0" type="INT32"/>
   </recipe>
   <recipe key="out">

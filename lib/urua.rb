@@ -40,6 +40,7 @@ module URUA
 
     ### Set Speed
     if opts['rtde_config_recipe_speed']
+      p "speed"
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
       opts['speed']['speed_slider_mask'] = 1
@@ -48,9 +49,11 @@ module URUA
 
     ### Set register
     if opts['rtde_config_recipe_regwrite']
+      p "regwrite"
       regwrite_names, regwrite_types = conf.get_recipe opts['rtde_config_recipe_regwrite']
       opts['reg'] = opts['rtde'].send_input_setup(regwrite_names,regwrite_types)
-      opts['output_int_register_0'].value = opts['reg']['output_int_register_0'].to_i
+      #opts['input_int_register_0'].value = opts['reg']['input_int_register_0']
+      p "regfinish"
     end
 
     ### Setup output
@@ -133,6 +136,7 @@ module URUA
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
     opts['rtde_config_recipe_speed'] ||= 'speed'
+    opts['rtde_config_recipe_regwrite'] ||= 'regwrite'
 
     Proc.new do
       on startup do |opts|
@@ -195,12 +199,20 @@ module URUA
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
           r.add_object(:Register, opts['server'].types.folder).tap{ |r|
-            r.add_variable_rw :Output_int_register_0, :Output_int_register_1
-            p.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::INT do |node, name, value|
-              #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
-              opts['reg'][name] = value
-              #opts['rtde'].send(opts['speed'])
+            r.add_variables :Output_int_register_0, :Output_int_register_1
+            p "1"
+            r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
+              #opts['speed']['speed_slider_fraction'] = opts['ov']. value / 100.0
+              puts value
+              puts name.downcase
+              puts opts['reg'].to_s
+              opts['speed']['speed_slider_fraction'] = 0.2
+              opts['rtde'].send(opts['speed'])
+              #puts opts['reg'][name.downcase]
+              opts['reg'][name.downcase] = value.to_i
+              opts['rtde'].send(opts['reg'])
             end
+            p "2"
           }
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
@@ -463,7 +475,7 @@ module URUA
             #  if opts['ov'] == data['target_speed_fraction']
             #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
             #opts['rtde'].send(opts['speed'])
-            opts['ovold'] = data['target_speed_fraction']
+            #opts['ovold'] = data['target_speed_fraction']
           end
         else
           if Time.now.to_i - 10 > opts['doit_rtde']
