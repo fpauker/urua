@@ -50,7 +50,7 @@ module URUA
     if opts['rtde_config_recipe_regwrite']
       regwrite_names, regwrite_types = conf.get_recipe opts['rtde_config_recipe_regwrite']
       opts['reg'] = opts['rtde'].send_input_setup(regwrite_names,regwrite_types)
-      opts['output_int_register_0'].value = opts['reg']['output_int_register_0']
+      opts['output_int_register_0'].value = opts['reg']['output_int_register_0'].to_i
     end
 
     ### Setup output
@@ -195,7 +195,12 @@ module URUA
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
           r.add_object(:Register, opts['server'].types.folder).tap{ |r|
-            r.add_variable_rw :Output_int_register_0
+            r.add_variable_rw :Output_int_register_0, :Output_int_register_1
+            p.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::INT do |node, name, value|
+              #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
+              opts['reg'][name] = value
+              #opts['rtde'].send(opts['speed'])
+            end
           }
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
