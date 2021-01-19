@@ -48,10 +48,10 @@ module URUA
     end
 
     ### Set register
-    if opts['rtde_config_recipe_regwrite']
+    if opts['rtde_config_recipe_in']
       p "regwrite"
-      regwrite_names, regwrite_types = conf.get_recipe opts['rtde_config_recipe_regwrite']
-      opts['reg'] = opts['rtde'].send_input_setup(regwrite_names,regwrite_types)
+      input_names, input_types = conf.get_recipe opts['rtde_config_recipe_in']
+      opts['in'] = opts['rtde'].send_input_setup(input_names,input_types)
       #opts['input_int_register_0'].value = opts['reg']['input_int_register_0']
       p "regfinish"
     end
@@ -136,7 +136,7 @@ module URUA
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
     opts['rtde_config_recipe_speed'] ||= 'speed'
-    opts['rtde_config_recipe_regwrite'] ||= 'regwrite'
+    opts['rtde_config_recipe_in'] ||= 'in'
 
     Proc.new do
       on startup do |opts|
@@ -188,6 +188,19 @@ module URUA
           a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
         }
 
+        reg = opts['server'].types.add_object_type(:RegType).tap {|r|
+          r.add_object(:Inputs, opts['server'].types.folder).tap {|i|
+            i.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
+            i.add_variables :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
+            i.add_variables :Double0 , :Double1 , :Double2 , :Double3 , :Double4 , :Double5 , :Double6 , :Double7 , :Double8 , :Double9 , :Double10 , :Double11 , :Double12 , :Double13 , :Double14 , :Double15 , :Double16 , :Double17 , :Double18 , :Double19 , :Double20 , :Double21 , :Double22 , :Double23 , :Double24 , :Double25 , :Double26 , :Double27 , :Double28 , :Double29 , :Double30 , :Double31 , :Double32 , :Double33 , :Double34 , :Double35 , :Double36 , :Double37 , :Double38 , :Double39 , :Double40 , :Double41 , :Double42 , :Double43 , :Double44 , :Double45 , :Double46 , :Double47 , :Double48 , :Double49 , :Double50
+          }
+          r.add_object(:Outputs, opts['server'].types.folder).tap{|o|
+            o.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
+            o.add_variables :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
+            o.add_variables :Double0 , :Double1 , :Double2 , :Double3 , :Double4 , :Double5 , :Double6 , :Double7 , :Double8 , :Double9 , :Double10 , :Double11 , :Double12 , :Double13 , :Double14 , :Double15 , :Double16 , :Double17 , :Double18 , :Double19 , :Double20 , :Double21 , :Double22 , :Double23 , :Double24 , :Double25 , :Double26 , :Double27 , :Double28 , :Double29 , :Double30 , :Double31 , :Double32 , :Double33 , :Double34 , :Double35 , :Double36 , :Double37 , :Double38 , :Double39 , :Double40 , :Double41 , :Double42 , :Double43 , :Double44 , :Double45 , :Double46 , :Double47 , :Double48 , :Double49 , :Double50
+          }
+        }
+
         # RobotObjectType
         rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
           r.add_variables :SerialNumber, :RobotModel
@@ -199,10 +212,13 @@ module URUA
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
           r.add_object(:Register, opts['server'].types.folder).tap{ |r|
+
             r.add_variables :Output_int_register_0, :Output_int_register_1
-            p "1"
+
+
             r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
-              #opts['speed']['speed_slider_fraction'] = opts['ov']. value / 100.0
+
+              # only test if writing works
               puts value
               puts name.downcase
               puts opts['reg'].to_s
