@@ -187,7 +187,7 @@ module URUA
           a.add_object(:ActualVoltage, opts['server'].types.folder).tap   { |p| URUA::add_axis_concept p, :AxisVoltage }
           a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
         }
-
+        # RegitsterType
         reg = opts['server'].types.add_object_type(:RegType).tap {|r|
           r.add_object(:Inputs, opts['server'].types.folder).tap {|i|
             i.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
@@ -211,24 +211,26 @@ module URUA
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
-          r.add_object(:Register, opts['server'].types.folder).tap{ |r|
 
-            r.add_variables :Output_int_register_0, :Output_int_register_1
-
-
-            r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
-
-              # only test if writing works
-              puts value
-              puts name.downcase
-              puts opts['reg'].to_s
-              opts['speed']['speed_slider_fraction'] = 0.2
-              opts['rtde'].send(opts['speed'])
-              #puts opts['reg'][name.downcase]
-              opts['reg'][name.downcase] = value.to_i
-              opts['rtde'].send(opts['reg'])
-            end
-            p "2"
+          ### Has to be deleted due to new Registerrype
+          # r.add_object(:Register, opts['server'].types.folder).tap{ |r|
+          #
+          #   r.add_variables :Output_int_register_0, :Output_int_register_1
+          #
+          #
+          #   r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
+          #
+          #     # only test if writing works
+          #     puts value
+          #     puts name.downcase
+          #     puts opts['reg'].to_s
+          #     opts['speed']['speed_slider_fraction'] = 0.2
+          #     opts['rtde'].send(opts['speed'])
+          #     #puts opts['reg'][name.downcase]
+          #     opts['reg'][name.downcase] = value.to_i
+          #     opts['rtde'].send(opts['reg'])
+          #   end
+          #   p "2"
           }
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
@@ -340,6 +342,11 @@ module URUA
         opts['ss'] = st.find(:SpeedScaling)
         opts['mo'] = st.find(:Remote)
         opts['op'] = st.find(:OperationalMode)
+
+        ### register
+
+        register = robot.manifest(:Register, reg)
+        #how to reduce code and opts values for all registers
 
         ### Axes
         axes = robot.manifest(:Axes, ax)
