@@ -4,7 +4,7 @@
 		<field name="speed_slider_mask" type="UINT32"/>
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
-  <recipe key="regwrite">
+  <recipe key="in">
     <field name="input_int_register_0" type="INT32"/>
   </recipe>
   <recipe key="out">
