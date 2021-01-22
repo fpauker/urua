@@ -231,7 +231,7 @@ module URUA
           #     opts['rtde'].send(opts['reg'])
           #   end
           #   p "2"
-          }
+          #}
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
             p.add_variable :Programs
@@ -343,8 +343,8 @@ module URUA
         opts['mo'] = st.find(:Remote)
         opts['op'] = st.find(:OperationalMode)
 
-        ### register
 
+        ### register
         register = robot.manifest(:Register, reg)
         #how to reduce code and opts values for all registers
 
@@ -380,8 +380,8 @@ module URUA
         opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
         ### Register
-        opts['regfol'] = robot.find :Register
-        opts['regouti0'] = opts['regfol'].find :Output_int_register_0
+        #opts['regfol'] = robot.find :Register
+        #opts['regouti0'] = opts['regfol'].find :Output_int_register_0
 
         ### Connecting to universal robot
         URUA::start_rtde opts
@@ -471,7 +471,7 @@ module URUA
           opts['ss'].value = data['speed_scaling']
 
           #register
-          opts['regouti0'].value = data['output_int_register_0']
+          #opts['regouti0'].value = data['output_int_register_0']
 
           # State objects
           opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
