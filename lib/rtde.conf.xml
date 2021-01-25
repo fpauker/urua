@@ -6,6 +6,7 @@
 	</recipe>
   <recipe key="in">
     <field name="input_int_register_0" type="INT32"/>
+    <field name="input_bit_register_64" type="UINT32"/>
   </recipe>
   <recipe key="out">
     <field name="timestamp" type="DOUBLE"/>

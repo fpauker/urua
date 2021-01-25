@@ -188,11 +188,26 @@ module URUA
           a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
         }
         # RegitsterType
+
         reg = opts['server'].types.add_object_type(:RegType).tap {|r|
           r.add_object(:Inputs, opts['server'].types.folder).tap {|i|
-            i.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
-            i.add_variables :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
-            i.add_variables :Double0 , :Double1 , :Double2 , :Double3 , :Double4 , :Double5 , :Double6 , :Double7 , :Double8 , :Double9 , :Double10 , :Double11 , :Double12 , :Double13 , :Double14 , :Double15 , :Double16 , :Double17 , :Double18 , :Double19 , :Double20 , :Double21 , :Double22 , :Double23 , :Double24 , :Double25 , :Double26 , :Double27 , :Double28 , :Double29 , :Double30 , :Double31 , :Double32 , :Double33 , :Double34 , :Double35 , :Double36 , :Double37 , :Double38 , :Double39 , :Double40 , :Double41 , :Double42 , :Double43 , :Double44 , :Double45 , :Double46 , :Double47 , :Double48 , :Double49 , :Double50
+            i.add_object(:Bitregister, opts['server'].types.folder).tap {|b|
+              p "no ned"
+              0.upto(127) do |i|
+                b.add_variable_rw :"Bit#{i}" do |node,value,external|
+                  puts "floistbeste"
+                  opts['in']["input_bit_register_"+i.to_s] = value.to_i
+                  opts['rtde'].send(opts['in'])
+                end
+              end
+              #b.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
+            }
+            i.add_object(:Intregister, opts['server'].types.folder).tap {|i|
+              i.add_variables :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
+            }
+            i.add_object(:Doubleregister, opts['server'].types.folder).tap {|d|
+              d.add_variables :Double0 , :Double1 , :Double2 , :Double3 , :Double4 , :Double5 , :Double6 , :Double7 , :Double8 , :Double9 , :Double10 , :Double11 , :Double12 , :Double13 , :Double14 , :Double15 , :Double16 , :Double17 , :Double18 , :Double19 , :Double20 , :Double21 , :Double22 , :Double23 , :Double24 , :Double25 , :Double26 , :Double27 , :Double28 , :Double29 , :Double30 , :Double31 , :Double32 , :Double33 , :Double34 , :Double35 , :Double36 , :Double37 , :Double38 , :Double39 , :Double40 , :Double41 , :Double42 , :Double43 , :Double44 , :Double45 , :Double46 , :Double47 , :Double48 , :Double49 , :Double50
+            }
           }
           r.add_object(:Outputs, opts['server'].types.folder).tap{|o|
             o.add_variables :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
@@ -348,9 +363,17 @@ module URUA
         register = robot.manifest(:Register, reg)
         #how to reduce code and opts values for all registers
         inputs = register.find :Inputs
-        opts['in_bits'] = inputs.find :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
+        ibitreg = inputs.find :Bitregister
+        opts['in_bits'] = ibitreg.find :Bit0 , :Bit1 , :Bit2 , :Bit3 , :Bit4 , :Bit5 , :Bit6 , :Bit7 , :Bit8 , :Bit9 , :Bit10 , :Bit11 , :Bit12 , :Bit13 , :Bit14 , :Bit15 , :Bit16 , :Bit17 , :Bit18 , :Bit19 , :Bit20 , :Bit21 , :Bit22 , :Bit23 , :Bit24 , :Bit25 , :Bit26 , :Bit27 , :Bit28 , :Bit29 , :Bit30 , :Bit31 , :Bit32 , :Bit33 , :Bit34 , :Bit35 , :Bit36 , :Bit37 , :Bit38 , :Bit39 , :Bit40 , :Bit41 , :Bit42 , :Bit43 , :Bit44 , :Bit45 , :Bit46 , :Bit47 , :Bit48 , :Bit49 , :Bit50
+        p opts['in_bits'][0].value = 0
+        iintreg = inputs.find :Intregister
+        idoubreg = inputs.find :Doubleregister
         outputs = register.find :Outputs
+        obitreg = outputs.find :Bitregister
+        ointreg = outputs.find :Intregister
+        odoubreg = outputs.find :Doubleregister
         opts['out_int'] = outputs.find :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
+
         ### Axes
         axes = robot.manifest(:Axes, ax)
         aapf, avelf, acurf, avolf, amomf = axes.find :ActualPositions, :ActualVelocities, :ActualCurrents, :ActualVoltage, :ActualMomentum
