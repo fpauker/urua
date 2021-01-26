@@ -39,11 +39,12 @@ module URUA
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Set Speed
-    if opts['rtde_config_recipe_speed']"
+    if opts['rtde_config_recipe_speed']
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
       opts['speed']['speed_slider_mask'] = 1
-      opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
+      #opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
+      opts['rtde'].send(opts['speed'])
     end
 
     ### Set register
@@ -214,7 +215,16 @@ module URUA
           r.add_variables :SerialNumber, :RobotModel
           r.add_object(:State, opts['server'].types.folder).tap{ |s|
             s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote, :OperationalMode
-            s.add_variable_rw :Override
+            s.add_variable_rw :Override do |node,value,external|
+              if external
+                opts['speed']['speed_slider_fraction'] = value / 100.0
+                opts['rtde'].send(opts['speed'])
+              end
+            end
+
+
+
+
           }
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
@@ -386,8 +396,6 @@ module URUA
         opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
         ### Register
-        #opts['regfol'] = robot.find :Register
-        #opts['regouti0'] = opts['regfol'].find :Output_int_register_0
 
         ### Connecting to universal robot
         URUA::start_rtde opts
@@ -495,15 +503,21 @@ module URUA
           URUA::split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) # Actual TCP Speed
           URUA::split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
+          #speed slider or override
+          p data['target_speed_fraction']
+          if opts['ov'].value != (data['target_speed_fraction'] * 100).to_i
+            opts['ov'].value = (data['target_speed_fraction'] * 100).to_i
+          end
+
           ######TODO Fix Write Values that opc ua does not overwrite the speed slider mask of manual changes
           # Write values
-          if opts['rtde_config_recipe_speed']
+          #if opts['rtde_config_recipe_speed']
             #if opts['ov'] != opts['ovold']
             #  if opts['ov'] == data['target_speed_fraction']
             #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
             #opts['rtde'].send(opts['speed'])
             #opts['ovold'] = data['target_speed_fraction']
-          end
+
         else
           if Time.now.to_i - 10 > opts['doit_rtde']
             opts['doit_rtde'] = Time.now.to_i
