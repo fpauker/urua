@@ -5,7 +5,8 @@
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
   <recipe key="in">
-    <field name="input_int_register_0" type="INT32"/>
+    <!--Only put Input Registers here which are used-->
+    <field name="input_bit_register_64" type="BOOL"/>
   </recipe>
   <recipe key="out">
     <field name="timestamp" type="DOUBLE"/>

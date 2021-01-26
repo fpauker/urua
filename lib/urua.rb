@@ -39,8 +39,7 @@ module URUA
     opts['rtde'] = UR::Rtde.new(opts['ipadress']).connect
 
     ### Set Speed
-    if opts['rtde_config_recipe_speed']
-      p "speed"
+    if opts['rtde_config_recipe_speed']"
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
       opts['speed']['speed_slider_mask'] = 1
@@ -49,11 +48,8 @@ module URUA
 
     ### Set register
     if opts['rtde_config_recipe_in']
-      p "regwrite"
       input_names, input_types = conf.get_recipe opts['rtde_config_recipe_in']
       opts['in'] = opts['rtde'].send_input_setup(input_names,input_types)
-      #opts['input_bit_register_64'].value = opts['in']['input_bit_register_64']
-      p "regfinish"
     end
 
     ### Setup output
@@ -188,26 +184,18 @@ module URUA
           a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
         }
         # RegitsterType
-
         reg = opts['server'].types.add_object_type(:RegType).tap {|r|
           r.add_object(:Inputs, opts['server'].types.folder).tap {|i|
             i.add_object(:Bitregister, opts['server'].types.folder).tap {|b|
               64.upto(127) do |z|
                 b.add_variable_rw :"Bit#{z}" do |node,value,external|
                   if external
-                    begin
-                      p opts['in']
-                      p "input_bit_register_"+z.to_s
-                      opts['in']["input_bit_register_"+z.to_s] = "TRUE"
-                      opts['rtde'].send(opts['in'])
-                    rescue => e
-                      puts e.message
-                    end
+                    opts['in']["input_bit_register_"+z.to_s] = value
+                    opts['rtde'].send(opts['in'])
                   end
                 end
               end
             }
-            p "te"
             i.add_object(:Intregister, opts['server'].types.folder).tap {|b|
               b.add_variable_rw :Int0 do |node,value,external|
                 if external
@@ -216,6 +204,7 @@ module URUA
                 end
               end
             }
+            # extend with double regsiter for input and all output regiters
           }
         }
 
@@ -231,26 +220,6 @@ module URUA
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
 
-          ### Has to be deleted due to new Registerrype
-          # r.add_object(:Register, opts['server'].types.folder).tap{ |r|
-          #
-          #   r.add_variables :Output_int_register_0, :Output_int_register_1
-          #
-          #
-          #   r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
-          #
-          #     # only test if writing works
-          #     puts value
-          #     puts name.downcase
-          #     puts opts['reg'].to_s
-          #     opts['speed']['speed_slider_fraction'] = 0.2
-          #     opts['rtde'].send(opts['speed'])
-          #     #puts opts['reg'][name.downcase]
-          #     opts['reg'][name.downcase] = value.to_i
-          #     opts['rtde'].send(opts['reg'])
-          #   end
-          #   p "2"
-          #}
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
             p.add_variable :Programs
@@ -364,12 +333,11 @@ module URUA
 
         ### register
         register = robot.manifest(:Register, reg)
-        #how to reduce code and opts values for all registers
         inputs = register.find :Inputs
         ibitreg = inputs.find :Bitregister
         opts['b_bits'] = 64.upto(127).map{|b|
           ib = ibitreg.find :"Bit#{b}"
-          ib.value = 0
+          ib.value = false
           ib
         }
         iintreg = inputs.find :Intregister
@@ -378,12 +346,13 @@ module URUA
           ii.value = 0
           ii
         }
+        #extend it with other registers
         #idoubreg = inputs.find :Doubleregister
         #outputs = register.find :Outputs
         #obitreg = outputs.find :Bitregister
         #ointreg = outputs.find :Intregister
         #odoubreg = outputs.find :Doubleregister
-        #opts['out_int'] = outputs.find :Int0 , :Int1 , :Int2 , :Int3 , :Int4 , :Int5 , :Int6 , :Int7 , :Int8 , :Int9 , :Int10 , :Int11 , :Int12 , :Int13 , :Int14 , :Int15 , :Int16 , :Int17 , :Int18 , :Int19 , :Int20 , :Int21 , :Int22 , :Int23 , :Int24 , :Int25 , :Int26 , :Int27 , :Int28 , :Int29 , :Int30 , :Int31 , :Int32 , :Int33 , :Int34 , :Int35 , :Int36 , :Int37 , :Int38 , :Int39 , :Int40 , :Int41 , :Int42 , :Int43 , :Int44 , :Int45 , :Int46 , :Int47 , :Int48 , :Int49 , :Int50
+
 
         ### Axes
         axes = robot.manifest(:Axes, ax)
@@ -508,7 +477,6 @@ module URUA
           opts['ss'].value = data['speed_scaling']
 
           #register
-          p data['output_bit_register_64']
           # State objects
           opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
           opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
