@@ -217,17 +217,42 @@ module URUA
               end
             }
             i.add_object(:Intregister, opts['server'].types.folder).tap {|b|
-              0.upto(48) do |z|
+              0.upto(47) do |z|
                 b.add_variable_rw :"Int#{z}" do |node,value,external|
                   if external
-                    p opts['in']
                     opts['inint']["input_int_register_" + z.to_s] = value.to_i
                     opts['rtde'].send(opts['inint'])
                   end
                 end
               end
             }
-            # extend with double regsiter for input and all output regiters
+            i.add_object(:Doubleregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable_rw :"Double#{z}" do |node,value,external|
+                  if external
+                    opts['indoub']["input_double_register_" + z.to_s] = value.to_f
+                    opts['rtde'].send(opts['indoub'])
+                  end
+                end
+              end
+            }
+          }
+          r.add_object(:Outputs, opts['server'].types.folder).tap {|o|
+            o.add_object(:Bitregister, opts['server'].types.folder).tap {|b|
+              64.upto(127) do |z|
+                b.add_variable :"Bit#{z}"
+              end
+            }
+            o.add_object(:Intregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable :"Int#{z}"
+              end
+            }
+            o.add_object(:Doubleregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable :"Double#{z}"
+              end
+            }
           }
         }
 
@@ -373,18 +398,39 @@ module URUA
           ib
         }
         iintreg = inputs.find :Intregister
-        opts['i_bits'] = 0.upto(48).map{|b|
+        opts['i_int'] = 0.upto(47).map{|b|
           ii = iintreg.find :"Int#{b}"
           ii.value = 0
           ii
         }
         #extend it with other registers
-        #idoubreg = inputs.find :Doubleregister
-        #outputs = register.find :Outputs
-        #obitreg = outputs.find :Bitregister
-        #ointreg = outputs.find :Intregister
-        #odoubreg = outputs.find :Doubleregister
+        idoubreg = inputs.find :Doubleregister
+        opts['i_doub'] = 0.upto(47).map{|b|
+          id = idoubreg.find :"Double#{b}"
+          id.value = 0.0
+          id
+        }
+        #Output register
+        outputs = register.find :Outputs
+        obitreg = outputs.find :Bitregister
+        opts['o_bit'] = 64.upto(127).map{|b|
+          ob = obitreg.find :"Bit#{b}"
+          ob.value = false
+          ob
+        }
+        ointreg = outputs.find :Intregister
+        opts['o_int'] = 0.upto(47).map{|b|
+          oi = ointreg.find :"Int#{b}"
+          oi.value = 0
+          oi
+        }
 
+        odoubreg = outputs.find :Doubleregister
+        opts['o_doub'] = 0.upto(47).map{|b|
+          od = odoubreg.find :"Double#{b}"
+          od.value = 0.0
+          od
+        }
 
         ### Axes
         axes = robot.manifest(:Axes, ax)
@@ -507,6 +553,12 @@ module URUA
           opts['ss'].value = data['speed_scaling']
 
           #register
+
+          #bitregister
+          # 64.upto(127).map{|r|
+          #   opts[]
+          # }
+
           # State objects
           opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
           opts['sm'].value = UR::Rtde::SAFETYMODE[data['safety_mode']]
