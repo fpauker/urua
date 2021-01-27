@@ -4,9 +4,18 @@
 		<field name="speed_slider_mask" type="UINT32"/>
 		<field name="speed_slider_fraction" type="DOUBLE"/>
 	</recipe>
-  <recipe key="in">
+  <recipe key="inbit">
     <!--Only put Input Registers here which are used-->
     <field name="input_bit_register_64" type="BOOL"/>
+    <field name="input_bit_register_65" type="BOOL"/>
+  </recipe>
+  <recipe key="inint">
+    <!--Only put Input Registers here which are used-->
+    <field name="input_int_register_0" type="INT32"/>
+    <field name="input_int_register_1" type="INT32"/>
+  </recipe>
+  <recipe key="indoub">
+    <!--Only put Input Registers here which are used-->
   </recipe>
   <recipe key="out">
     <field name="timestamp" type="DOUBLE"/>

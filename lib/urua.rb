@@ -43,14 +43,20 @@ module URUA
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
       opts['speed']['speed_slider_mask'] = 1
-      #opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
-      opts['rtde'].send(opts['speed'])
     end
 
     ### Set register
-    if opts['rtde_config_recipe_in']
-      input_names, input_types = conf.get_recipe opts['rtde_config_recipe_in']
-      opts['in'] = opts['rtde'].send_input_setup(input_names,input_types)
+    if opts['rtde_config_recipe_inbit']
+      bit_names, bit_types = conf.get_recipe opts['rtde_config_recipe_inbit']
+      opts['inbit'] = opts['rtde'].send_input_setup(bit_names,bit_types)
+    end
+    if opts['rtde_config_recipe_inint']
+      int_names, int_types = conf.get_recipe opts['rtde_config_recipe_inint']
+      opts['inint'] = opts['rtde'].send_input_setup(int_names,int_types)
+    end
+    if opts['rtde_config_recipe_indoub']
+      doub_names, doub_types = conf.get_recipe opts['rtde_config_recipe_indoub']
+      opts['indoub'] = opts['rtde'].send_input_setup(doub_names,doub_types)
     end
 
     ### Setup output
@@ -59,6 +65,17 @@ module URUA
     end
     if not opts['rtde'].send_start
       puts 'Unable to start synchronization'
+    end
+
+    ###Initialize all inputs
+    bit_names.each do |i|
+      opts['inbit'][i] = false
+    end
+    int_names.each do |i|
+      opts['inint'][i] = 0
+    end
+    doub_names.each do |i|
+      opts['indoub'][i] = 0.0
     end
   end #}}}
 
@@ -133,7 +150,9 @@ module URUA
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
     opts['rtde_config_recipe_speed'] ||= 'speed'
-    opts['rtde_config_recipe_in'] ||= 'in'
+    opts['rtde_config_recipe_inbit'] ||= 'inbit'
+    opts['rtde_config_recipe_inint'] ||= 'inint'
+    opts['rtde_config_recipe_indoub'] ||= 'indoub'
 
     Proc.new do
       on startup do |opts|
@@ -191,17 +210,20 @@ module URUA
               64.upto(127) do |z|
                 b.add_variable_rw :"Bit#{z}" do |node,value,external|
                   if external
-                    opts['in']["input_bit_register_"+z.to_s] = value
-                    opts['rtde'].send(opts['in'])
+                    opts['inbit']["input_bit_register_" + z.to_s] = value
+                    opts['rtde'].send(opts['inbit'])
                   end
                 end
               end
             }
             i.add_object(:Intregister, opts['server'].types.folder).tap {|b|
-              b.add_variable_rw :Int0 do |node,value,external|
-                if external
-                  opts['in']["input_int_register_0"] = value.to_i
-                  opts['rtde'].send(opts['in'])
+              0.upto(48) do |z|
+                b.add_variable_rw :"Int#{z}" do |node,value,external|
+                  if external
+                    p opts['in']
+                    opts['inint']["input_int_register_" + z.to_s] = value.to_i
+                    opts['rtde'].send(opts['inint'])
+                  end
                 end
               end
             }
@@ -351,7 +373,7 @@ module URUA
           ib
         }
         iintreg = inputs.find :Intregister
-        opts['i_bits'] = 0.upto(0).map{|b|
+        opts['i_bits'] = 0.upto(48).map{|b|
           ii = iintreg.find :"Int#{b}"
           ii.value = 0
           ii
@@ -504,19 +526,9 @@ module URUA
           URUA::split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
           #speed slider or override
-          p data['target_speed_fraction']
           if opts['ov'].value != (data['target_speed_fraction'] * 100).to_i
             opts['ov'].value = (data['target_speed_fraction'] * 100).to_i
           end
-
-          ######TODO Fix Write Values that opc ua does not overwrite the speed slider mask of manual changes
-          # Write values
-          #if opts['rtde_config_recipe_speed']
-            #if opts['ov'] != opts['ovold']
-            #  if opts['ov'] == data['target_speed_fraction']
-            #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
-            #opts['rtde'].send(opts['speed'])
-            #opts['ovold'] = data['target_speed_fraction']
 
         else
           if Time.now.to_i - 10 > opts['doit_rtde']
