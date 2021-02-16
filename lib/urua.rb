@@ -268,10 +268,6 @@ module URUA
                 opts['rtde'].send(opts['speed'])
               end
             end
-
-
-
-
           }
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
