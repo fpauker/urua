@@ -40,20 +40,23 @@ module URUA
 
     ### Set Speed
     if opts['rtde_config_recipe_speed']
-      p "speed"
       speed_names, speed_types = conf.get_recipe opts['rtde_config_recipe_speed']
       opts['speed'] = opts['rtde'].send_input_setup(speed_names, speed_types)
       opts['speed']['speed_slider_mask'] = 1
-      opts['ov'].value = opts['speed']['speed_slider_fraction'].to_i
     end
 
     ### Set register
-    if opts['rtde_config_recipe_regwrite']
-      p "regwrite"
-      regwrite_names, regwrite_types = conf.get_recipe opts['rtde_config_recipe_regwrite']
-      opts['reg'] = opts['rtde'].send_input_setup(regwrite_names,regwrite_types)
-      #opts['input_int_register_0'].value = opts['reg']['input_int_register_0']
-      p "regfinish"
+    if opts['rtde_config_recipe_inbit']
+      bit_names, bit_types = conf.get_recipe opts['rtde_config_recipe_inbit']
+      opts['inbit'] = opts['rtde'].send_input_setup(bit_names,bit_types)
+    end
+    if opts['rtde_config_recipe_inint']
+      int_names, int_types = conf.get_recipe opts['rtde_config_recipe_inint']
+      opts['inint'] = opts['rtde'].send_input_setup(int_names,int_types)
+    end
+    if opts['rtde_config_recipe_indoub']
+      doub_names, doub_types = conf.get_recipe opts['rtde_config_recipe_indoub']
+      opts['indoub'] = opts['rtde'].send_input_setup(doub_names,doub_types)
     end
 
     ### Setup output
@@ -62,6 +65,17 @@ module URUA
     end
     if not opts['rtde'].send_start
       puts 'Unable to start synchronization'
+    end
+
+    ###Initialize all inputs
+    bit_names.each do |i|
+      opts['inbit'][i] = false
+    end
+    int_names.each do |i|
+      opts['inint'][i] = 0
+    end
+    doub_names.each do |i|
+      opts['indoub'][i] = 0.0
     end
   end #}}}
 
@@ -138,7 +152,9 @@ module URUA
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
     opts['rtde_config_recipe_speed'] ||= 'speed'
-    opts['rtde_config_recipe_regwrite'] ||= 'regwrite'
+    opts['rtde_config_recipe_inbit'] ||= 'inbit'
+    opts['rtde_config_recipe_inint'] ||= 'inint'
+    opts['rtde_config_recipe_indoub'] ||= 'indoub'
 
     Proc.new do
       on startup do |opts|
@@ -189,33 +205,76 @@ module URUA
           a.add_object(:ActualVoltage, opts['server'].types.folder).tap   { |p| URUA::add_axis_concept p, :AxisVoltage }
           a.add_object(:ActualMomentum, opts['server'].types.folder).tap  { |p| p.add_variable :AxisMomentum }
         }
+        # RegitsterType
+        reg = opts['server'].types.add_object_type(:RegType).tap {|r|
+          r.add_object(:Inputs, opts['server'].types.folder).tap {|i|
+            i.add_object(:Bitregister, opts['server'].types.folder).tap {|b|
+              64.upto(127) do |z|
+                b.add_variable_rw :"Bit#{z}" do |node,value,external|
+                  if external
+                    opts['inbit']["input_bit_register_" + z.to_s] = value
+                    opts['rtde'].send(opts['inbit'])
+                  end
+                end
+              end
+            }
+            i.add_object(:Intregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable_rw :"Int#{z}" do |node,value,external|
+                  if external
+                    opts['inint']["input_int_register_" + z.to_s] = value.to_i
+                    opts['rtde'].send(opts['inint'])
+                  end
+                end
+              end
+            }
+            i.add_object(:Doubleregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable_rw :"Double#{z}" do |node,value,external|
+                  if external
+                    opts['indoub']["input_double_register_" + z.to_s] = value.to_f
+                    opts['rtde'].send(opts['indoub'])
+                  end
+                end
+              end
+            }
+          }
+          r.add_object(:Outputs, opts['server'].types.folder).tap {|o|
+            o.add_object(:Bitregister, opts['server'].types.folder).tap {|b|
+              64.upto(127) do |z|
+                b.add_variable :"Bit#{z}"
+              end
+            }
+            o.add_object(:Intregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable :"Int#{z}"
+              end
+            }
+            o.add_object(:Doubleregister, opts['server'].types.folder).tap {|b|
+              0.upto(47) do |z|
+                b.add_variable :"Double#{z}"
+              end
+            }
+          }
+        }
+
 
         # RobotObjectType
         rt = opts['server'].types.add_object_type(:RobotType).tap { |r|
           r.add_variables :SerialNumber, :RobotModel
           r.add_object(:State, opts['server'].types.folder).tap{ |s|
             s.add_variables :CurrentProgram, :RobotMode, :RobotState, :JointMode, :SafetyMode, :ToolMode, :ProgramState, :SpeedScaling, :Remote, :OperationalMode
-            s.add_variable_rw :Override
+            s.add_variable_rw :Override do |node,value,external|
+              if external
+                opts['speed']['speed_slider_fraction'] = value / 100.0
+                opts['rtde'].send(opts['speed'])
+              end
+            end
           }
           r.add_object(:SafetyBoard, opts['server'].types.folder).tap{ |r|
             r.add_variables :MainVoltage, :RobotVoltage, :RobotCurrent
           }
-          r.add_object(:Register, opts['server'].types.folder).tap{ |r|
-            r.add_variables :Output_int_register_0, :Output_int_register_1
-            p "1"
-            r.add_method :WriteRegister, name: OPCUA::TYPES::STRING, value: OPCUA::TYPES::STRING do |node, name, value|
-              #opts['speed']['speed_slider_fraction'] = opts['ov']. value / 100.0
-              puts value
-              puts name.downcase
-              puts opts['reg'].to_s
-              opts['speed']['speed_slider_fraction'] = 0.2
-              opts['rtde'].send(opts['speed'])
-              #puts opts['reg'][name.downcase]
-              opts['reg'][name.downcase] = value.to_i
-              opts['rtde'].send(opts['reg'])
-            end
-            p "2"
-          }
+
           r.add_object(:Programs, opts['server'].types.folder).tap{ |p|
             p.add_object :Program, opts['pf'], OPCUA::OPTIONAL
             p.add_variable :Programs
@@ -327,6 +386,50 @@ module URUA
         opts['mo'] = st.find(:Remote)
         opts['op'] = st.find(:OperationalMode)
 
+        ### register
+        register = robot.manifest(:Register, reg)
+        inputs = register.find :Inputs
+        ibitreg = inputs.find :Bitregister
+        opts['b_bits'] = 64.upto(127).map{|b|
+          ib = ibitreg.find :"Bit#{b}"
+          ib.value = false
+          ib
+        }
+        iintreg = inputs.find :Intregister
+        opts['i_int'] = 0.upto(47).map{|b|
+          ii = iintreg.find :"Int#{b}"
+          ii.value = 0
+          ii
+        }
+        #extend it with other registers
+        idoubreg = inputs.find :Doubleregister
+        opts['i_doub'] = 0.upto(47).map{|b|
+          id = idoubreg.find :"Double#{b}"
+          id.value = 0.0
+          id
+        }
+        #Output register
+        outputs = register.find :Outputs
+        obitreg = outputs.find :Bitregister
+        opts['o_bit'] = 64.upto(127).map{|b|
+          ob = obitreg.find :"Bit#{b}"
+          ob.value = false
+          ob
+        }
+        ointreg = outputs.find :Intregister
+        opts['o_int'] = 0.upto(47).map{|b|
+          oi = ointreg.find :"Int#{b}"
+          oi.value = 0
+          oi
+        }
+
+        odoubreg = outputs.find :Doubleregister
+        opts['o_doub'] = 0.upto(47).map{|b|
+          od = odoubreg.find :"Double#{b}"
+          od.value = 0.0
+          od
+        }
+
         ### Axes
         axes = robot.manifest(:Axes, ax)
         aapf, avelf, acurf, avolf, amomf = axes.find :ActualPositions, :ActualVelocities, :ActualCurrents, :ActualVoltage, :ActualMomentum
@@ -359,8 +462,6 @@ module URUA
         opts['afa'] = aff.find :Axis1, :Axis2, :Axis3, :Axis4, :Axis5, :Axis6
 
         ### Register
-        opts['regfol'] = robot.find :Register
-        opts['regouti0'] = opts['regfol'].find :Output_int_register_0
 
         ### Connecting to universal robot
         URUA::start_rtde opts
@@ -450,7 +551,11 @@ module URUA
           opts['ss'].value = data['speed_scaling']
 
           #register
-          opts['regouti0'].value = data['output_int_register_0']
+
+          #bitregister
+          # 64.upto(127).map{|r|
+          #   opts[]
+          # }
 
           # State objects
           opts['rm'].value = UR::Rtde::ROBOTMODE[data['robot_mode']]
@@ -470,15 +575,11 @@ module URUA
           URUA::split_vector6_data(data['actual_qd'],opts['as'], opts['asa']) # Actual TCP Speed
           URUA::split_vector6_data(data['actual_qd'],opts['af'], opts['afa']) # Actual TCP Force
 
-          ######TODO Fix Write Values that opc ua does not overwrite the speed slider mask of manual changes
-          # Write values
-          if opts['rtde_config_recipe_speed']
-            #if opts['ov'] != opts['ovold']
-            #  if opts['ov'] == data['target_speed_fraction']
-            #opts['speed']['speed_slider_fraction'] = opts['ov'].value / 100.0
-            #opts['rtde'].send(opts['speed'])
-            #opts['ovold'] = data['target_speed_fraction']
+          #speed slider or override
+          if opts['ov'].value != (data['target_speed_fraction'] * 100).to_i
+            opts['ov'].value = (data['target_speed_fraction'] * 100).to_i
           end
+
         else
           if Time.now.to_i - 10 > opts['doit_rtde']
             opts['doit_rtde'] = Time.now.to_i
