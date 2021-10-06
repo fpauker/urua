@@ -147,7 +147,7 @@ module URUA
   end
 
   def self::implementation_startup(opts) #{{{
-    opts['sshport'] || 22
+    opts['sshport'] ||= 22
 
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
