@@ -88,9 +88,9 @@ module URUA
 
   def self::ssh_start(opts) #{{{
     if opts['certificate']
-      opts['ssh'] = Net::SSH.start(opts['ipadress'], opts['username'], :keys => [ opts['certificate'] ])
+      opts['ssh'] = Net::SSH.start(opts['ipadress'], opts['username'], :port => opts['sshport'], :keys => [ opts['certificate'] ])
     else
-      opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'])
+      opts['ssh'] = opts['password'] ? Net::SSH.start(opts['ipadress'], opts['username'], :port => opts['sshport'], password: opts['password']) : Net::SSH.start(opts['ipadress'], opts['username'], :port => opts['sshport'])
     end
   end #}}}
 
@@ -133,6 +133,8 @@ module URUA
   end
 
   def self::implementation_startup(opts) #{{{
+    opts['sshport'] || 22
+
     opts['rtde_config'] ||= File.join(__dir__,'rtde.conf.xml')
     opts['rtde_config_recipe_base'] ||= 'out'
     opts['rtde_config_recipe_speed'] ||= 'speed'
